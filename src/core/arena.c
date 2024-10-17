@@ -67,6 +67,9 @@ void* arena_allocator_allocate(void* context, u64 size) {
 }
 
 void arena_allocator_free(void* context, void* block, u64 size) {
+    (void)context;
+    (void)block;
+    (void)size;
     // The arena should not free it's memory partially
     // Keep it empty
 }

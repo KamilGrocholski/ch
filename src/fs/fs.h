@@ -22,4 +22,4 @@ void fs_close(file_handle_t* handle);
 
 b8 fs_size(file_handle_t* handle, u64* out_size);
 
-b8 fs_read_entire_text(const char* filepath, string_t* out_text);
+string_t fs_read_entire_text(allocator_t* allocator, const char* filepath);

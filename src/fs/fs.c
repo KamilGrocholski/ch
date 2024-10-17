@@ -1,5 +1,6 @@
 #include "fs/fs.h"
 
+#include "core/defines.h"
 #include "core/logger.h"
 
 #include <stdio.h>
@@ -40,7 +41,7 @@ b8 fs_open(const char* path, file_mode_t mode, b8 binary, file_handle_t* out_han
 
 void fs_close(file_handle_t* handle) {
     if (!handle->handle) { 
-        return false;
+        return;
     }
     fclose((FILE*)handle->handle);
     handle->handle = 0;
@@ -57,26 +58,27 @@ b8 fs_size(file_handle_t* handle, u64* out_size) {
     return true;
 }
 
-b8 fs_read_entire_text(const char* filepath, string_t* out_text) {
+string_t fs_read_entire_text(allocator_t* allocator, const char* filepath) {
     file_handle_t f = {0};
     if (!fs_open(filepath, FILE_MODE_READ, false, &f)) {
-        return false;
+        return 0;
     }
 
     u64 size = 0;
     if (!fs_size(&f, &size)) {
         fs_close(&f);
-        return false;
+        return 0;
     }
-    *string = string_create_with_capacity(out_text->allocator, size);
-    u64 bytes_read = fread((char*)string.data, 1, size, (FILE*)f.handle);
-    string.length = bytes_read;
+    string_t string = string_create_with_capacity(allocator, size + 1);
+    u64 bytes_read = fread(string, 1, size, (FILE*)f.handle);
+    string_length(string) = bytes_read;
+    string[bytes_read] = 0;
 
     if (bytes_read < size) {
         string_t copy = string_duplicate(allocator, string);
-        string_destroy(&string);
+        string_destroy(string);
         fs_close(&f);
-        return true;
+        return copy;
     }
 
     fs_close(&f);

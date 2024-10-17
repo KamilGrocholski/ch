@@ -9,9 +9,9 @@ typedef struct str_t {
 
 #define STR_FMT "%.*s"
 
-#define STR_EMPTY ((str_t){.length = 0, .data = ""})
+#define STR_EMPTY (str_t){.length = 0, .data = ""}
 
-#define STR_NULL ((str_t){.length = 0, .data = 0})
+#define STR_NULL (str_t){.length = 0, .data = 0}
 
 str_t str_from_parts(const char* data, u64 length);
 

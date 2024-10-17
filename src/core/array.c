@@ -40,7 +40,7 @@ void* _array_create(u64 stride, u64 capacity, allocator_t* allocator) {
     return header + 1;
 }
 
-void* _array_maybe_resize(void* array, u64 min_capacity) {
+void* array_maybe_resize(void* array, u64 min_capacity) {
     array_header_t* old_header = array_header(array);
     if (old_header->capacity >= min_capacity) return array;
     u64 header_size = sizeof(array_header_t);

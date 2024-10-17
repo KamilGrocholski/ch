@@ -1,45 +1,53 @@
-CC = gcc
-CFLAGS = -Wall -I./src
+debug?=0
+NAME=main
+SRC_DIR=src
+BUILD_DIR=build
+INCLUDE_DIR=src
+LIB_DIR=lib
+TESTS_DIR=test
+BIN_DIR=bin
 
-SRC_DIR = src
-OBJ_DIR = build
-TEST_DIR = test
+ENTRYCFILE=$(SRC_DIR)/$(NAME).c
+SRCCFILES=$(shell find src -type f -name "*.c" ! -name "$(NAME).c")
+TESTCFILES=$(shell find test -type f -name "*.c")
 
-SRC = $(SRC_DIR)/main.c \
-      $(SRC_DIR)/core/array.c \
-      $(SRC_DIR)/core/memory.c \
-      $(SRC_DIR)/core/string.c \
-      $(SRC_DIR)/core/str.c \
-      $(SRC_DIR)/core/arena.c \
-      $(SRC_DIR)/core/logger.c \
-      $(SRC_DIR)/fs/fs.c
+OBJS=$(patsubst %.c,%.o, $(SRCCFILES) $(wildcard $(LIB_DIR)/**/*.c))
 
-OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+CC=gcc
+LINTER=
+FORMATTER=
 
-TEST = $(TEST_DIR)/test_manager.c \
-       $(TEST_DIR)/core/arena_test.c	
+CFLAGS=-std=gnu17 -D _GNU_SOURCE -D __STDC_WANT_LIB_EXT1__ -Wall -Wextra -pedantic -I$(INCLUDE_DIR)
+LDFLAGS=
 
-TARGET = main
-TEST_TARGET = test_main
+ifeq ($(debug), 1)
+	CFLAGS:=$(CFLAGS) -g -O0
+else
+	CFLAGS:=$(CFLAGS) -Oz
+endif
 
-all: $(TARGET)
+$(NAME): dir $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(BIN_DIR)/$@ $(patsubst %, build/%, $(OBJS)) $(ENTRYCFILE) 
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ)
+$(OBJS): dir
+	@mkdir -p $(BUILD_DIR)/$(@D)
+	@$(CC) $(CFLAGS) -o $(BUILD_DIR)/$@ -c $*.c
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(OBJ_DIR)/core
-	@mkdir -p $(OBJ_DIR)/fs
-	$(CC) $(CFLAGS) -c $< -o $@
+test: $(OBJS)
+	@$(CC) $(CFLAGS) -o $(BIN_DIR)/$(NAME)_test $(TESTCFILES) $(patsubst %, build/%, $^)
+	@$(BIN_DIR)/$(NAME)_test
 
-test: $(OBJ)
-	$(CC) $(CFLAGS) -o $(TEST_TARGET) $(TEST) $(OBJ)
-	./$(TEST_TARGET)
+check: $(NAME)
+	valgrind -s --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$< --help
+	valgrind -s --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$< --version
+	valgrind -s --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$< -v
+
+setup:
+
+dir:
+	@mkdir -p $(BUILD_DIR) $(BIN_DIR)
 
 clean:
-	rm -f $(TARGET) $(TEST_TARGET) $(OBJ)
-	rm -rf $(OBJ_DIR)
+	@rm -rf $(BUILD_DIR) $(BIN_DIR)
 
-valgrind: $(TARGET)
-	valgrind --leak-check=yes ./$(TARGET)
-
+.PHONY: check setup dir clean

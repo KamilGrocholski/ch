@@ -1,156 +1,162 @@
 #include "core/string.h"
 
-#include "core/defines.h"
-#include "core/logger.h"
-#include "core/str.h"
 #include "core/memory.h"
+#include "core/logger.h"
 
-#include <stdarg.h>
-#include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
-string_t string_create(allocator_t* allocator) {
-    return _string_create(STRING_DEFAULT_CAPACITY, allocator);
-}
-
-string_t string_create_with_capacity(allocator_t* allocator, u64 capacity) {
-    return _string_create(capacity, allocator);
-}
-
-string_t string_from_str(allocator_t* allocator, str_t str) {
-    string_t string = _string_create(str.length, allocator);
-    memory_copy((char*)string.data, str.data, str.length);
-    return string;
-}
-
-string_t string_from_cstr(allocator_t* allocator, const char* cstr) {
+string_t string_create(allocator_t* allocator, const char* cstr) {
     u64 length = strlen(cstr);
-    string_t string = _string_create(length, allocator);
-    memory_copy((char*)string.data, cstr, length);
-    string.length = length;
-    return string;
+    return string_create_with_length(allocator, cstr, length);
 }
 
 string_t string_duplicate(allocator_t* allocator, string_t other) {
-    string_t string = _string_create(other.capacity, allocator);
-    memory_copy((void*)string.data, (void*)other.data, other.length);
-    string.length = other.length;
+    return string_create_with_length(allocator, other, string_length(other));
+}
+
+string_t string_create_with_length(allocator_t* allocator, const void* init_string, u64 length) {
+    string_t string = 0;
+    string_header_t* header = 0;
+    u64 header_size = sizeof(string_header_t);
+    u64 size = header_size + length + 1;
+    if (allocator) {
+        header = allocator->allocate(allocator->context, size);
+    } else {
+        header = memory_allocate(size, MEMORY_TAG_STRING);
+    }
+    if (!header) {
+        return 0;
+    }
+    if (!init_string) {
+        memory_zero(header, size);
+    }
+    string = (char*)header + header_size;
+    header->length = length;
+    header->capacity = length;
+    header->allocator = allocator;
+    if (length && init_string) {
+        memory_copy(string, init_string, length);
+    }
+    string[length] = '\0';
     return string;
 }
 
-void string_destroy(string_t* string) {
-    if (string->allocator) {
-        string->allocator->free(string->allocator->context, (void*)string->data, string->capacity);
+string_t string_create_with_capacity(allocator_t* allocator, u64 capacity) {
+    string_header_t* header = 0;
+    u64 size = sizeof(string_header_t) + capacity;
+    if (allocator) {
+        header = allocator->allocate(allocator->context, size);
     } else {
-        memory_free((void*)string->data, string->capacity, MEMORY_TAG_STRING);
+        header = memory_allocate(size, MEMORY_TAG_STRING);
     }
-    string->capacity = 0;
-    string->length = 0;
-    string->allocator = 0;
-    string->data = 0;
+    if (!header) {
+        return 0;
+    }
+    header->length = 0;
+    header->capacity = capacity;
+    header->allocator = allocator;
+    return (char*)(header + 1);
 }
 
-void string_clear(string_t* string) {
-    string->length = 0;
+void string_append_length(string_t string, const char* other, u64 other_length) {
+	u64 length = string_length(string);
+	string = string_maybe_resize(string, other_length);
+	if (!string) {
+		return;
+    }
+    u64 new_length = length + other_length;
+	memory_copy(string + length, other, other_length);
+	string[new_length] = '\0';
+	string_length(string) = new_length;
 }
 
-void string_append_string(string_t* string, string_t other) {
-    _string_maybe_resize(string, string->length + other.length);
-    memory_copy((void*)string->data + string->length, (void*)other.data, other.length);
-    string->length += other.length;
+void string_append_str(string_t string, str_t str) {
+    string_append_length(string, str.data, str.length);
 }
 
-void string_append_char(string_t* string, char ch) {
-    _string_maybe_resize(string, string->length + 1);
-    ((char*)string->data)[string->length++] = ch;
+void string_append_string(string_t string, string_t other) {
+    string_append_length(string, other, string_length(other));
 }
 
-void string_append_str(string_t* string, str_t str) {
-    _string_maybe_resize(string, string->length + str.length);
-    memory_copy((void*)string->data + string->length, (void*)str.data, str.length);
-    string->length += str.length;
+void string_append_cstr(string_t string, const char* cstr) {
+    string_append_length(string, cstr, strlen(cstr));
 }
 
-void string_append_cstr(string_t* string, const char* cstr) {
-    str_t str = str_from_cstr(cstr);
-    _string_maybe_resize(string, string->length + str.length);
-    memory_copy((void*)string->data + string->length, (void*)str.data, str.length);
-    string->length += str.length;
-}
-
-void string_appendf(string_t* string, const char* format, ...) {
+void string_append_format(string_t string, const char* format, ...) {
     if (!format) {
         return;
     }
-	va_list args;
-	va_start(args, format);
-    string_appendf_v(string, format, args);
-	va_end(args);
+    va_list args;
+    va_start(args, format);
+    string_append_format_v(string, format, args);
+    va_end(args);
 }
 
-void string_appendf_v(string_t* string, const char* format, va_list va_list_origin) {
-    if (!format) {
-        return;
-    }
+void string_append_format_v(string_t string, const char* format, va_list args) {
     i32 length = 0;
-    va_list va_list_copy;
-    va_copy(va_list_copy, va_list_origin);
-    length = vsnprintf(0, 0, format, va_list_copy);
-    va_end(va_list_copy);
-
+    va_list args_copy;
+    va_copy(args_copy, args);
+    length = vsnprintf(0, 0, format, args_copy);
+    va_end(args_copy);
     if (length < 0) {
         return;
     }
-    _string_maybe_resize(string, string->length + length + 1);
-    vsnprintf(&((char*)string->data)[string->length], length + 1, format, va_list_origin);
-    string->length += length;
+    string = string_maybe_resize(string, string_length(string) + length + 1);
+    vsnprintf(string + string_length(string), length + 1, format, args);
+    string_length(string) += length;
+}
+
+void string_destroy(string_t string) {
+    if (!string) {
+        LOG_ERROR("string_destroy - called with string 0.");
+        return;
+    }
+    string_header_t* header = string_header(string);
+    u64 size = sizeof(string_header_t) + header->capacity;
+    if (header->allocator) {
+        header->allocator->free(header->allocator->context, header, size);
+    } else {
+        memory_free(header, size, MEMORY_TAG_STRING);
+    }
+    string = 0;
+}
+
+string_t string_maybe_resize(string_t string, u64 length_to_add) {
+    if (!string) {
+        return 0;
+    }
+    string_header_t* header = string_header(string);
+    u64 target_length = header->length + length_to_add;
+    if (header->capacity >= target_length) {
+        return string;
+    }
+    u64 new_capacity = header->capacity * STRING_RESIZE_FACTOR;
+    if (new_capacity < target_length) {
+        new_capacity = target_length;
+    }
+    string_t new_string = string_create_with_capacity(header->allocator, new_capacity);
+    memory_copy(new_string, string, string_length(string));
+    string_length(new_string) = string_length(string);
+    string_destroy(string);
+    return new_string;
+}
+
+b8 string_compare(string_t a, string_t b) {
+    if (string_length(a) != string_length(b)) {
+        return false;
+    }
+    for (u64 i = 0; i < string_length(a); i++) {
+        if (a[i] != b[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 str_t string_to_str(string_t string) {
-    return (str_t){
-        .length = string.length,
-        .data = string.data,
-    };
-}
-
-b8 string_is_empty(string_t string) {
-    return string.length != 0;
-}
-
-b8 string_is_null(string_t string) {
-    return string.data == 0;
-}
-
-string_t _string_create(u64 capacity, allocator_t* allocator) {
-    string_t string = (string_t){
-        .data = 0,
-        .capacity = capacity,
-        .length = 0,
-        .allocator = allocator,
-    };
-    if (allocator) {
-        string.data = allocator->allocate(string.allocator->context, capacity);
-    } else {
-        string.data = memory_allocate(capacity, MEMORY_TAG_STRING);
+    if (!string) {
+        return STR_EMPTY;
     }
-    if (!string.data) {
-        string.data = 0;
-        string.capacity = 0;
-    }
-    return string;
-}
-
-void _string_maybe_resize(string_t* string, u64 min_capacity) {
-    if (string->capacity >= min_capacity) {
-        return;
-    }
-    u64 new_capacity = string->capacity * STRING_RESIZE_FACTOR;
-    if (new_capacity < min_capacity) {
-        new_capacity = min_capacity;
-    }
-    string_t new_string = _string_create(new_capacity, string->allocator);
-    memory_copy((void*)new_string.data, (void*)string->data, string->length);
-    new_string.length = string->length;
-    string_destroy(string);
-    *string = new_string;
+    return (str_t){.length = string_length(string), .data = string};
 }
