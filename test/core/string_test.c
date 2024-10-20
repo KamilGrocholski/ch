@@ -35,6 +35,34 @@ u8 string__should_create_from_parts(void) {
     return true;
 }
 
+u8 string__should_append_string(void) {
+    const char* seg1 = "seg1";
+    u32 seg1_length = strlen(seg1);
+    const char* seg2 = "seg1";
+    u32 seg2_length = strlen(seg2);
+    string_t string = string_create(0, seg1);
+    expect_neq(0, string);
+    string_t other = string_create(0, seg2);
+    expect_neq(0, other);
+
+    char expected_cstr[seg1_length + seg2_length + 1];
+    sprintf(expected_cstr, "%s%s", seg1, seg2);
+    u32 expected_length = strlen(expected_cstr);
+
+    string = string_append_string(string, other);
+    expect_eq(expected_length, strlen(string));
+    expect_eq('\0', string[strlen(string)]);
+    expect_eq(expected_length, string_length(string));
+    for (u32 i = 0; i < expected_length; i++) {
+       expect_eq(expected_cstr[i], string[i]); 
+    }
+
+    string_destroy(string);
+    string_destroy(other);
+
+    return true;
+}
+
 u8 string__should_append_cstr(void) {
     string_t string = string_create(0, "");
     expect_neq(0, string);
@@ -86,6 +114,7 @@ u8 string__should_not_crash_on_null_string_destroy(void) {
 void string__register_test(void) {
     test_manager_register(string__should_create_and_destroy, "String should create and destroy");
     test_manager_register(string__should_create_from_parts, "String should create from parts");
+    test_manager_register(string__should_append_string, "String should append string");
     test_manager_register(string__should_append_cstr, "String should append cstr");
     test_manager_register(string__should_append_format, "String should append format");
     test_manager_register(string__should_not_crash_on_null_string_destroy, "String should not crash on null string destroy");
