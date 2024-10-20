@@ -30,6 +30,8 @@ string_t string_from_parts(allocator_t *allocator, const void* init, u64 length)
 
 string_t string_duplicate(string_t string);
 
+string_t string_append_string(string_t string, string_t other);
+
 string_t string_append_cstr(string_t string, const char* cstr);
 
 string_t string_append_format(string_t string, const char* format, ...);

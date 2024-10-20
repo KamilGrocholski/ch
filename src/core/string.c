@@ -35,6 +35,10 @@ string_t string_duplicate(string_t string) {
     return _string_from_parts(header->allocator, string, header->length);
 }
 
+string_t string_append_string(string_t string, string_t other) {
+    return _string_append_length(string, other, string_length(other));
+}
+
 string_t string_append_cstr(string_t string, const char* cstr) {
     return _string_append_length(string, cstr, strlen(cstr));
 }
