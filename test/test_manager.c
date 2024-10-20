@@ -29,14 +29,8 @@ void test_manager_run(void) {
 
     u32 count = array_length(tests);
 
-    /*kclock total_time;*/
-    /*kclock_start(&total_time);*/
-
     for (u32 i = 0; i < count; ++i) {
-        /*kclock test_time;*/
-        /*kclock_start(&test_time);*/
         u8 result = tests[i].func();
-        /*kclock_update(&test_time);*/
 
         if (result == true) {
             ++passed;
@@ -47,17 +41,11 @@ void test_manager_run(void) {
             LOG_ERROR("[FAILED]: %s", tests[i].desc);
             ++failed;
         }
-        string_t status = string_create_with_capacity(0, 128);
-        string_append_format(status, failed ? "*** %d FAILED ***" : "SUCCESS", failed);
-        /*kclock_update(&total_time);*/
-        f32 tte = 22;
-        /*LOG_INFO("Executed %d of %d (skipped %d) %s (%.6f sec / %.6f sec total", i + 1, */
-        /*        count, skipped, status, test_time.elapsed, total_time.elapsed);*/
-        LOG_INFO("Executed %d of %d (skipped %d) %s (%.6f sec / %.6f sec total", i + 1, 
-                count, skipped, status, tte, tte);
+        string_t status = string_from_parts(0, 0, 128);
+        status = string_append_format(status, failed ? "*** %d FAILED ***" : "SUCCESS", failed);
+        LOG_INFO("Executed %d of %d (skipped %d) %s", i + 1, count, skipped, status);
+        string_destroy(status);
     }
-
-    /*kclock_stop(&total_time);*/
 
     LOG_INFO("Results: %d passed, %d failed, %d skipped.", passed, failed, skipped);
 }

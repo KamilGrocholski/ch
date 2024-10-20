@@ -1,6 +1,5 @@
 #include "fs/fs.h"
 
-#include "core/defines.h"
 #include "core/logger.h"
 
 #include <stdio.h>
@@ -69,13 +68,13 @@ string_t fs_read_entire_text(allocator_t* allocator, const char* filepath) {
         fs_close(&f);
         return 0;
     }
-    string_t string = string_create_with_capacity(allocator, size + 1);
+    string_t string = string_from_parts(allocator, 0, size + 1);
     u64 bytes_read = fread(string, 1, size, (FILE*)f.handle);
-    string_length(string) = bytes_read;
+    string_length_set(string, bytes_read);
     string[bytes_read] = 0;
 
     if (bytes_read < size) {
-        string_t copy = string_duplicate(allocator, string);
+        string_t copy = string_duplicate(string);
         string_destroy(string);
         fs_close(&f);
         return copy;
