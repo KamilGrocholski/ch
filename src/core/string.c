@@ -82,6 +82,12 @@ void string_destroy(string_t string) {
     }
 }
 
+str_t string_to_str(string_t string) {
+    if (!string) {
+        return STR_NULL;
+    }
+    return (str_t){.length = string_length(string), .data = string};
+}
 
 static string_header_t* _header_allocate(allocator_t* allocator, u64 length) {
     string_header_t* header = 0;

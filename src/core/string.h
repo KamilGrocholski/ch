@@ -37,3 +37,5 @@ string_t string_append_format(string_t string, const char* format, ...);
 string_t string_append_format_v(string_t string, const char* format, va_list args);
 
 void string_destroy(string_t string);
+
+str_t string_to_str(string_t string);

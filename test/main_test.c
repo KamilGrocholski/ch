@@ -1,6 +1,7 @@
 #include <core/logger.h>
 
 #include "core/arena_test.h"
+#include "core/string_test.h"
 
 #include "test_manager.h"
 
@@ -8,6 +9,7 @@ int main() {
     test_manager_init();
 
     arena__register_test();
+    string__register_test();
 
     LOG_INFO("Starting tests...");
 
