@@ -8,10 +8,13 @@
 #include <string.h>
 
 static const char* memory_tag_strings[MEMORY_TAG_MAX_TAGS] = {
-    "UNKNOWN    ",
-    "ARRAY      ",
-    "STRING     ",
-    "ARENA      ",
+    "UNKNOWN        ",
+    "ARRAY          ",
+    "STRING         ",
+    "ARENA          ",
+    "TRIE_NODE      ",
+    "HASHMAP        ",
+    "HTTP_HEADERS   ",
 };
 
 typedef struct memory_stats_t {

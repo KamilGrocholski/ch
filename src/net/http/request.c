@@ -1,21 +1,19 @@
-#include "net/http/request.h"
+#include "net/http.h"
 
-#include "net/http/method.h"
-#include "core/logger.h"
 #include "core/assert.h"
-#include "core/str.h"
+#include "core/logger.h"
 
 void http_request_init(allocator_t* allocator, http_request_t* dest) {
-    *dest = (http_request_t){0};
     http_request_headers_init(allocator, &dest->headers);
 }
 
 void http_request_deinit(http_request_t* request) {
     http_request_headers_deinit(&request->headers);
-    *request = (http_request_t){0};
 }
 
 b8 http_request_parse(str_t raw_request, http_request_t* dest) {
+    ASSERT_MSG(dest, "http_request_parse - dest MUST not be 0.");
+
     b8 is_raw_request_null = str_is_null(raw_request);
     if (is_raw_request_null) {
         return false;
@@ -41,6 +39,7 @@ b8 http_request_parse(str_t raw_request, http_request_t* dest) {
     if (!http_method_from_str(method, &dest->method)) {
         return false;
     }
+    dest->path = path;
     dest->proto = proto;
 
     // Split key value pairs
@@ -53,7 +52,7 @@ b8 http_request_parse(str_t raw_request, http_request_t* dest) {
 
         b8 should_parse_pair = !str_is_null(key) && !str_is_null(value) && !str_is_empty(key) && !str_is_empty(value);
         if (should_parse_pair) {
-            if (!http_request_headers_set(dest->headers, key, value)) {
+            if (!http_request_headers_set(&dest->headers, key, value)) {
                 return false;
             }
         }
@@ -72,23 +71,28 @@ static u64 _hash(str_t key, u64 capacity) {
 }
 
 void http_request_headers_init(allocator_t* allocator, http_request_headers_t* headers) {
-    if (!headers) return;
+    if (!headers) {
+        LOG_ERROR("http_request_headers_init - called with headers 0.");
+        return;
+    }
     headers->allocator = allocator;
     headers->capacity = 64;
     headers->length = 0;
     if (allocator) {
         headers->table = allocator->allocate(allocator->context, headers->capacity * sizeof(http_request_headers_entry_t));
     } else {
-        headers->table = memory_allocate(headers->capacity * sizeof(http_request_headers_entry_t), MEMORY_TAG_HASHMAP);
+        headers->table = memory_allocate(headers->capacity * sizeof(http_request_headers_entry_t), MEMORY_TAG_HTTP_HEADERS);
     }
-    if (headers->table) {
-        memory_zero(headers->table, headers->capacity * sizeof(http_request_headers_entry_t));
+    if (!headers->table) {
+        LOG_ERROR("http_request_headers_init - could not allocate headers table.");
+        return;
     }
+    memory_zero(headers->table, headers->capacity * sizeof(http_request_headers_entry_t));
 }
 
 static void http_request_headers_resize(http_request_headers_t* headers, u64 new_capacity) {
-    if (new_capacity < 32) {
-        new_capacity = 32;
+    if (new_capacity < HTTP_REQUEST_HEADERS_MIN_CAPACITY) {
+        new_capacity = HTTP_REQUEST_HEADERS_MIN_CAPACITY;
     }
     http_request_headers_entry_t* old_table = headers->table;
     http_request_headers_entry_t* new_table = 0;
@@ -98,7 +102,7 @@ static void http_request_headers_resize(http_request_headers_t* headers, u64 new
     if (headers->allocator) {
         new_table = headers->allocator->allocate(headers->allocator->context, new_capacity * sizeof(http_request_headers_entry_t));
     } else {
-        new_table = memory_allocate(new_capacity * sizeof(http_request_headers_entry_t), MEMORY_TAG_HASHMAP);
+        new_table = memory_allocate(new_capacity * sizeof(http_request_headers_entry_t), MEMORY_TAG_HTTP_HEADERS);
     }
     if (!new_table) {
         return;
@@ -113,13 +117,13 @@ static void http_request_headers_resize(http_request_headers_t* headers, u64 new
     if (headers->allocator) {
         headers->allocator->free(headers->allocator->context, old_table, old_capacity * sizeof(http_request_headers_entry_t));
     } else {
-        memory_free(old_table, old_capacity * sizeof(http_request_headers_entry_t), MEMORY_TAG_HASHMAP);
+        memory_free(old_table, old_capacity * sizeof(http_request_headers_entry_t), MEMORY_TAG_HTTP_HEADERS);
     }
 }
 
 b8 http_request_headers_set(http_request_headers_t* headers, str_t key, str_t value) {
-    if (headers->length >= (u64)(headers->capacity * 0.75f)) {
-        http_request_headers_resize(headers, headers->capacity * 2);
+    if (headers->length >= (u64)(headers->capacity * HTTP_REQUEST_HEADERS_CAPACITY_THRESHHOLD)) {
+        http_request_headers_resize(headers, headers->capacity * HTTP_REQUEST_HEADERS_GROW_FACTOR);
     }    
     u64 index = _hash(key, headers->capacity);
     u64 original_index = index;
@@ -134,22 +138,22 @@ b8 http_request_headers_set(http_request_headers_t* headers, str_t key, str_t va
     if (entry->is_occupied && str_compare(entry->key, key)) {
         if (value.length > entry->value.length) {
             if (headers->allocator) {
-                char* new_data = entry->value.data = headers->allocator->allocate(headers->allocator->context, value.length);
+                const char* new_data = headers->allocator->allocate(headers->allocator->context, value.length);
                 if (!new_data) {
                     return false;
                 }
-                headers->allocator->free(headers->allocator->context, value.data, value.length);
+                headers->allocator->free(headers->allocator->context, (void*)value.data, value.length);
                 entry->value.data = new_data;
             } else {
-                char* new_data = entry->value.data = memory_allocate(value.length, MEMORY_TAG_HASHMAP);
+                const char* new_data = memory_allocate(value.length, MEMORY_TAG_HTTP_HEADERS);
                 if (!new_data) {
                     return false;
                 }
-                memory_free(value.data, value.length, MEMORY_TAG_HASHMAP);
+                memory_free((void*)value.data, value.length, MEMORY_TAG_HTTP_HEADERS);
                 entry->value.data = new_data;
             }
         }
-        memory_copy(entry->value.data, value.data, value.length);
+        memory_copy((void*)entry->value.data, value.data, value.length);
         entry->value.length = value.length;
         return true;
     };
@@ -157,15 +161,15 @@ b8 http_request_headers_set(http_request_headers_t* headers, str_t key, str_t va
         entry->key.data = headers->allocator->allocate(headers->allocator->context, key.length);
         entry->value.data = headers->allocator->allocate(headers->allocator->context, value.length);
     } else {
-        entry->key.data = memory_allocate(key.length, MEMORY_TAG_HASHMAP);
-        entry->value.data = memory_allocate(value.length, MEMORY_TAG_HASHMAP);
+        entry->key.data = memory_allocate(key.length, MEMORY_TAG_HTTP_HEADERS);
+        entry->value.data = memory_allocate(value.length, MEMORY_TAG_HTTP_HEADERS);
     }
     if (!entry->key.data || !entry->value.data) {
         return false;
     }
-    memory_copy(entry->key.data, key.data, key.length);
+    memory_copy((void*)entry->key.data, key.data, key.length);
     entry->key.length = key.length;
-    memory_copy(entry->value.data, value.data, value.length);
+    memory_copy((void*)entry->value.data, value.data, value.length);
     entry->value.length = value.length;
     entry->is_occupied = true;
     headers->length++;
@@ -213,18 +217,18 @@ void http_request_headers_deinit(http_request_headers_t* headers) {
         http_request_headers_entry_t* e = &(headers->table[i]);
         if (headers->table[i].is_occupied) {
             if (headers->allocator) {
-                headers->allocator->free(headers->allocator->context, e->key.data, e->key.length);
-                headers->allocator->free(headers->allocator->context, e->value.data, e->value.length);
+                headers->allocator->free(headers->allocator->context, (void*)e->key.data, e->key.length);
+                headers->allocator->free(headers->allocator->context, (void*)e->value.data, e->value.length);
             } else {
-                memory_free(e->key.data, e->key.length, MEMORY_TAG_HASHMAP);
-                memory_free(e->value.data, e->value.length, MEMORY_TAG_HASHMAP);
+                memory_free((void*)e->key.data, e->key.length, MEMORY_TAG_HTTP_HEADERS);
+                memory_free((void*)e->value.data, e->value.length, MEMORY_TAG_HTTP_HEADERS);
             }
         }
     }
     if (headers->allocator) {
         headers->allocator->free(headers->allocator->context, headers->table, headers->capacity * sizeof(http_request_headers_entry_t));
     } else {
-        memory_free(headers->table, headers->capacity * sizeof(http_request_headers_entry_t), MEMORY_TAG_HASHMAP);
+        memory_free(headers->table, headers->capacity * sizeof(http_request_headers_entry_t), MEMORY_TAG_HTTP_HEADERS);
     }
     headers->table = 0;
     headers->length = 0;

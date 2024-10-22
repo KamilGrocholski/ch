@@ -1,6 +1,4 @@
-#include "net/http/method.h"
-
-#include "core/defines.h"
+#include "net/http.h"
 
 #include <string.h>
 

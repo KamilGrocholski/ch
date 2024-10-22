@@ -30,6 +30,10 @@ string_t string_from_parts(allocator_t *allocator, const void* init, u64 length)
     return _string_from_parts(allocator, init, length);
 }
 
+string_t string_from_str(allocator_t *allocator, str_t str) {
+    return _string_from_parts(allocator, str.data, str.length);
+}
+
 string_t string_duplicate(string_t string) {
     string_header_t* header = string_header(string);
     return _string_from_parts(header->allocator, string, header->length);
@@ -66,10 +70,11 @@ string_t string_append_format_v(string_t string, const char* format, va_list arg
         return string;
     }
     u32 length = (u32)length_check;
-    string = _string_maybe_grow(string, string_length(string) + length);
+    u64 new_length = string_length(string) + length;
+    string = _string_maybe_grow(string, new_length);
     vsnprintf(string + string_length(string), length + 1, format, args);
-    string_length_set(string, string_length(string) + length);
-    string[string_length(string)] = '\0';
+    string_length_set(string, new_length);
+    string[new_length] = '\0';
     return string;
 }
 

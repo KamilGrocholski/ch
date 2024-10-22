@@ -55,7 +55,7 @@ str_t str_pop_first_split(str_t* str, str_t split_by) {
         *str = STR_EMPTY;
         return out;
     }
-    str_t out = str_substr(*str, 0, index + 1);
+    str_t out = str_substr(*str, 0, index);
     *str = str_substr(*str, index + split_by.length, str->length); 
     return out;
 }
@@ -67,7 +67,7 @@ str_t str_pop_first_split_char(str_t* str, char split_by) {
         *str = STR_EMPTY;
         return out;
     }
-    str_t out = str_substr(*str, 0, index + 1);
+    str_t out = str_substr(*str, 0, index);
     *str = str_substr(*str, index + 1, str->length); 
     return out;
 }
@@ -98,7 +98,7 @@ b8 str_cut(str_t str, str_t separator, str_t* before, str_t* after) {
     if (index == -1) {
         return false;
     }
-    *before = (str_t){ .length = index + 1, .data = str.data };
+    *before = (str_t){ .length = index, .data = str.data };
     *after = (str_t){ .length = str.length - separator.length - index, .data = str.data + separator.length + index };
     return true;
 }
@@ -125,7 +125,7 @@ b8 str_compare(str_t a, str_t b) {
     if (a.length != b.length) {
         return false;
     }
-    for (u64 i = 0; i <= a.length ; i++) {
+    for (u64 i = 0; i < a.length; i++) {
         if (a.data[i] != b.data[i]) {
             return false;
         }
@@ -153,7 +153,7 @@ b8 str_has_prefix(str_t str, str_t prefix) {
 }
 
 b8 str_has_prefix_char(str_t str, char prefix) {
-    return str.data == prefix;
+    return str.data[0] == prefix;
 }
 
 b8 str_has_suffix(str_t str, str_t suffix) {

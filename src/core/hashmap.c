@@ -1,6 +1,7 @@
 #include "core/hashmap.h"
 
 #include "core/memory.h"
+#include "core/logger.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -32,6 +33,7 @@ static hashmap_t* _allocate(allocator_t* allocator, u64 item_size, u64 capacity)
     if (!hashmap || !table) {
         return 0;
     };
+    memory_zero(table, table_size);
     hashmap->table = table;
     hashmap->item_size = item_size;
     hashmap->capacity = capacity;
@@ -56,6 +58,7 @@ static void _resize(hashmap_t* hashmap, u64 new_capacity) {
     if (!new_table) {
         return;
     };
+    memory_zero(new_table, table_size);
     hashmap->table = new_table;
     for (u64 i = 0; i < hashmap->capacity; i++) {
         hashmap_entry_t* entry = &(old_table[i]);
@@ -88,7 +91,7 @@ b8 hashmap_put(hashmap_t* hashmap, const char* key, void* value) {
     }
     if (entry->is_occupied && _key_compare(key, key_length, entry->key)) {
         memory_copy(entry->value, value, hashmap->item_size);
-        return;
+        return true;
     };
     if (hashmap->allocator) {
         entry->key = hashmap->allocator->allocate(hashmap->allocator->context, key_length + 1);
@@ -124,7 +127,7 @@ b8 hashmap_get(hashmap_t* hashmap, const char* key, void** dest) {
 }
 
 b8 hashmap_remove(hashmap_t* hashmap, const char* key) {
-    if (!hashmap->length) {
+    if (hashmap->length < 1) {
         return false;
     }
     u64 hash = _hash(key);
@@ -145,10 +148,9 @@ b8 hashmap_remove(hashmap_t* hashmap, const char* key) {
 
 void hashmap_destroy(hashmap_t* hashmap) {
     if (!hashmap) {
+        LOG_ERROR("hashmap_destroy - called with hashmap 0.");
         return;
     }
-
-    u64 table_size = hashmap->capacity * sizeof(hashmap_entry_t);
 
     for (u64 i = 0; i < hashmap->capacity; ++i) {
         hashmap_entry_t* entry = &(hashmap->table[i]);
@@ -163,6 +165,7 @@ void hashmap_destroy(hashmap_t* hashmap) {
         }
     }
 
+    u64 table_size = hashmap->capacity * sizeof(hashmap_entry_t);
     if (hashmap->allocator) {
         hashmap->allocator->free(hashmap->allocator->context, hashmap->table, table_size);
         hashmap->allocator->free(hashmap->allocator->context, hashmap, sizeof(hashmap_t));

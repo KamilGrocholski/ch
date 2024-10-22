@@ -11,8 +11,8 @@
 void _log_output(log_level_t level, const char* message, ...) {
     const char* level_literals[6] = {"[FATAL]: ", "[ERROR]: ", "[WARN]:  ", "[INFO]:  ", "[DEBUG]: ", "[TRACE]: "};
 
-    string_t out_message = string_from_parts(0, 0, 64);
-    string_t formatted = string_from_parts(0, 0, 64);
+    string_t out_message = string_from_parts(0, 0, 16);
+    string_t formatted = string_from_parts(0, 0, 16);
 
     va_list args;
     va_start(args, message);

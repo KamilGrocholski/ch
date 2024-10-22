@@ -2,24 +2,32 @@
 #include "core/logger.h"
 #include "core/defines.h"
 #include "core/array.h"
+#include "core/hashmap.h"
 #include "fs/fs.h"
+#include "net/http.h"
 
 #include <stdio.h>
 #include <assert.h>
 
-int main() {
-    string_t string = string_create(0, "siema");
-    string = string_append_cstr(string, " elo!");
-    string = string_append_cstr(string, " \ntak\n");
-    string = string_append_cstr(string, "format\n");
-    LOG_INFO(string);
-    string_destroy(string);
+void handle_users(http_response_writer_t writer, http_request_t* request) {
+    LOG_INFO("users");
+}
 
-    string_t content = fs_read_entire_text(0, "siema.txt");
-    if (content) {
-        LOG_INFO(content);
-        string_destroy(content);
-    }
+int main() {
+    memory_init();
+
+    http_server_t server = {0};
+    const u64 request_stack_buffer_size = 4096;
+    http_server_init(&server, request_stack_buffer_size);
+
+    http_server_get(&server, "/users", handle_users);
+
+    const u16 port = 8080;
+    http_server_start(&server, port);
+
+    http_server_deinit(&server);
+
+    memory_shutdown();
 
     return 0;
 }

@@ -28,6 +28,8 @@ string_t string_create(allocator_t *allocator, const char* cstr);
 
 string_t string_from_parts(allocator_t *allocator, const void* init, u64 length);
 
+string_t string_from_str(allocator_t *allocator, str_t str);
+
 string_t string_duplicate(string_t string);
 
 string_t string_append_string(string_t string, string_t other);

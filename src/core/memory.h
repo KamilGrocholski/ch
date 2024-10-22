@@ -7,6 +7,9 @@ typedef enum memory_tag_t {
     MEMORY_TAG_ARRAY,
     MEMORY_TAG_STRING,
     MEMORY_TAG_ARENA,
+    MEMORY_TAG_TRIE_NODE,
+    MEMORY_TAG_HASHMAP,
+    MEMORY_TAG_HTTP_HEADERS,
     MEMORY_TAG_MAX_TAGS,
 } memory_tag_t;
 

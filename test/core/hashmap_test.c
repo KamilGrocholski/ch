@@ -11,7 +11,7 @@
 u8 hashmap__should_create_and_destroy(void) {
     hashmap_t* hashmap = hashmap_create(0, sizeof(char*));
     expect_neq(0, hashmap);
-    string_destroy(hashmap);
+    hashmap_destroy(hashmap);
     return true;
 }
 
@@ -23,7 +23,7 @@ u8 hashmap__should_put_and_get(void) {
     b8 ok = hashmap_get(hashmap, "key", &got);
     expect_eq(true, ok);
     expect_eq(true, strncmp(got, "value", 5) == 0);
-    string_destroy(hashmap);
+    hashmap_destroy(hashmap);
     return true;
 }
 
@@ -36,7 +36,7 @@ u8 hashmap__should_resize(void) {
         expect_eq(true, ok);
         expect_eq(i, i);
     }
-    string_destroy(hashmap);
+    hashmap_destroy(hashmap);
     return true;
 }
 
@@ -45,12 +45,12 @@ u8 hashmap__should_put_and_remove(void) {
     expect_eq(true, hashmap_put(hashmap, "key", "value"));
     b8 ok = hashmap_remove(hashmap, "key");
     expect_eq(true, ok);
-    string_destroy(hashmap);
+    hashmap_destroy(hashmap);
     return true;
 }
 
 u8 hashmap__should_not_crash_on_null_destroy(void) {
-    string_destroy(0);
+    hashmap_destroy(0);
     return true;
 }
 
