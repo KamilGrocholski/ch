@@ -81,6 +81,8 @@ typedef struct trie_node_t {
 
 trie_node_t* trie_node_create();
 
+void trie_node_destroy_all_nodes(trie_node_t* root);
+
 void trie_insert(trie_node_t* root, http_method_t method, const char* key, http_handler_t handler);
 
 http_handler_t trie_search(trie_node_t* root, http_method_t method, str_t key);
