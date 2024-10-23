@@ -17,8 +17,12 @@ static void handle_client(http_server_t* server, i32 socket) {
     i32 client_fd = accept(socket, 0, 0);
 
     char buffer[server->stack_buffer_size];
-    u64 length = recv(client_fd, buffer, server->stack_buffer_size, 0);
-    str_t raw_request = str_from_parts(buffer, length);
+    i64 recv_length = recv(client_fd, buffer, server->stack_buffer_size, 0);
+    if (recv_length <= 0) {
+        close(client_fd);
+        return;
+    }
+    str_t raw_request = str_from_parts(buffer, (u64)recv_length);
 
     http_request_t request = {0};
     http_request_init(0, &request);
@@ -34,9 +38,8 @@ static void handle_client(http_server_t* server, i32 socket) {
         handler((http_response_writer_t){0}, &request);
     }
 
-    cleanup: 
-        http_request_deinit(&request);
-
+cleanup: 
+    http_request_deinit(&request);
     close(client_fd);
 }
 
@@ -46,7 +49,7 @@ void http_server_init(http_server_t* server, u32 stack_buffer_size) {
 }
 
 void http_server_deinit(http_server_t* server) {
-    (void)server;
+    http_router_deinit(&server->router);
 }
 
 void http_server_start(http_server_t* server, u16 port) {
