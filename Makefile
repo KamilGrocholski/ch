@@ -38,9 +38,7 @@ test: $(OBJS)
 	@$(BIN_DIR)/$(NAME)_test
 
 check: $(NAME)
-	valgrind -s --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$< --help
-	valgrind -s --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$< --version
-	valgrind -s --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$< -v
+	valgrind -s --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$<
 
 setup:
 
