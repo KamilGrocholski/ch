@@ -17,6 +17,7 @@ int main() {
     string__register_test();
     str__register_test();
     hashmap__register_test();
+    strhashmap__register_test();
 
     http_request__register_test();
     http_router__register_test();

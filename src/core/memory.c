@@ -14,7 +14,7 @@ static const char* memory_tag_strings[MEMORY_TAG_MAX_TAGS] = {
     "ARENA          ",
     "TRIE_NODE      ",
     "HASHMAP        ",
-    "HTTP_HEADERS   ",
+    "STRHASHMAP     ",
 };
 
 typedef struct memory_stats_t {

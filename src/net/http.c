@@ -3,6 +3,8 @@
 #include "core/assert.h"
 #include "core/logger.h"
 #include "core/str.h"
+#include "core/memory.h"
+#include "core/strhashmap.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -41,6 +43,7 @@ static void handle_client(http_server_t* server, i32 socket) {
 cleanup: 
     http_request_deinit(&request);
     close(client_fd);
+    memory_report();
 }
 
 void http_server_init(http_server_t* server, u32 stack_buffer_size) {

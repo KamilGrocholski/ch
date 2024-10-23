@@ -10,15 +10,6 @@
 
 #include <string.h>
 
-#define expect_str_eq_cstr(str, cstr) do { \
-    u32 cstr_length = strlen(cstr); \
-    expect_neq(0, str.data); \
-    expect_eq(cstr_length, cstr_length); \
-    for (u32 i = 0; i < cstr_length; i++) { \
-        expect_eq(cstr[i], str.data[i]); \
-    } \
-} while(0);
-
 u8 http_request__should_be_parsed(void) {
     http_request_t request = {0};
     http_request_init(0, &request);
@@ -44,10 +35,10 @@ u8 http_request__should_be_parsed(void) {
     expect_str_eq_cstr(request.proto, proto);
     expect_str_eq_cstr(request.body, body);
     str_t got;
-    ok = http_request_headers_get(&request.headers, str_from_cstr(header_accept_key), &got);
+    ok = strhashmap_get(&request.headers, str_from_cstr(header_accept_key), &got);
     expect_eq(true, ok);
     expect_str_eq_cstr(got, header_accept_value);
-    ok = http_request_headers_get(&request.headers, str_from_cstr(header_host_key), &got);
+    ok = strhashmap_get(&request.headers, str_from_cstr(header_host_key), &got);
     expect_eq(true, ok);
     expect_str_eq_cstr(got, header_host_value);
     string_destroy(raw_request);
@@ -55,32 +46,6 @@ u8 http_request__should_be_parsed(void) {
     return true;
 }
 
-u8 http_request__should_put_and_get_header(void) {
-    http_request_headers_t headers;
-    http_request_headers_init(0, &headers);
-
-    str_t key = str_from_cstr("tak");
-    str_t value = str_from_cstr("nie");
-    b8 ok = http_request_headers_set(&headers, key, value);
-    expect_eq(true, ok);
-    str_t got;
-    ok = http_request_headers_get(&headers, key, &got);
-    expect_eq(true, ok);
-    expect_str_eq_cstr(got, "nie");
-
-    str_t key2 = str_from_cstr("tak2");
-    str_t value2 = str_from_cstr("nie2");
-    ok = http_request_headers_set(&headers, key2, value2);
-    expect_eq(true, ok);
-    ok = http_request_headers_get(&headers, key2, &got);
-    expect_eq(true, ok);
-    expect_str_eq_cstr(got, "nie2");
-
-    http_request_headers_deinit(&headers);
-    return true;
-}
-
 void http_request__register_test(void) {
     test_manager_register(http_request__should_be_parsed, "Http request should be parsed");
-    test_manager_register(http_request__should_put_and_get_header, "Http request should put and get header");
 }
