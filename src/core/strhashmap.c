@@ -12,25 +12,6 @@ static u64 _hash(str_t key, u64 capacity) {
     return hash % capacity;
 }
 
-void strhashmap_init(allocator_t* allocator, strhashmap_t* strhashmap) {
-    if (!strhashmap) {
-        LOG_ERROR("strhashmap_init - called with strhashmap 0.");
-        return;
-    }
-    strhashmap->allocator = allocator;
-    strhashmap->capacity = 64;
-    strhashmap->length = 0;
-    if (allocator) {
-        strhashmap->table = allocator->allocate(allocator->context, strhashmap->capacity * sizeof(strhashmap_entry_t));
-    } else {
-        strhashmap->table = memory_allocate(strhashmap->capacity * sizeof(strhashmap_entry_t), MEMORY_TAG_STRHASHMAP);
-    }
-    if (!strhashmap->table) {
-        return;
-    }
-    memory_zero(strhashmap->table, strhashmap->capacity * sizeof(strhashmap_entry_t));
-}
-
 static void strhashmap_resize(strhashmap_t* strhashmap, u64 new_capacity) {
     if (new_capacity < STRHASHMAP_MIN_CAPACITY) {
         new_capacity = STRHASHMAP_MIN_CAPACITY;
@@ -40,29 +21,58 @@ static void strhashmap_resize(strhashmap_t* strhashmap, u64 new_capacity) {
     u64 old_capacity = strhashmap->capacity;
     strhashmap->capacity = new_capacity;
     strhashmap->length = 0;
+    u64 new_size = new_capacity * sizeof(strhashmap_entry_t);
+    u64 old_size = old_capacity * sizeof(strhashmap_entry_t);
     if (strhashmap->allocator) {
-        new_table = strhashmap->allocator->allocate(strhashmap->allocator->context, new_capacity * sizeof(strhashmap_entry_t));
+        new_table = strhashmap->allocator->allocate(strhashmap->allocator->context, new_size);
     } else {
-        new_table = memory_allocate(new_capacity * sizeof(strhashmap_entry_t), MEMORY_TAG_STRHASHMAP);
+        new_table = memory_allocate(new_size, MEMORY_TAG_STRHASHMAP);
     }
     if (!new_table) {
         return;
     }
     strhashmap->table = new_table;
-    memory_zero(strhashmap->table, new_capacity * sizeof(strhashmap_entry_t));
+    memory_zero(strhashmap->table, new_size);
     for (u64 i = 0; i < old_capacity; i++) {
         if (old_table[i].is_occupied) {
             strhashmap_set(strhashmap, old_table[i].key, old_table[i].value);
         }
     }
     if (strhashmap->allocator) {
-        strhashmap->allocator->free(strhashmap->allocator->context, old_table, old_capacity * sizeof(strhashmap_entry_t));
+        strhashmap->allocator->free(strhashmap->allocator->context, old_table, old_size);
     } else {
-        memory_free(old_table, old_capacity * sizeof(strhashmap_entry_t), MEMORY_TAG_STRHASHMAP);
+        memory_free(old_table, old_size, MEMORY_TAG_STRHASHMAP);
     }
 }
 
+void strhashmap_init(allocator_t* allocator, strhashmap_t* strhashmap) {
+    if (!strhashmap) {
+        LOG_ERROR("strhashmap_init - called with strhashmap 0.");
+        return;
+    }
+    strhashmap->allocator = allocator;
+    strhashmap->capacity = 64;
+    strhashmap->length = 0;
+    u64 size = sizeof(strhashmap_entry_t) * strhashmap->capacity;
+    if (allocator) {
+        strhashmap->table = allocator->allocate(allocator->context, size);
+    } else {
+        strhashmap->table = memory_allocate(size, MEMORY_TAG_STRHASHMAP);
+    }
+    if (!strhashmap->table) {
+        LOG_ERROR("strhashmap_init - could not allocate table memory.");
+        return;
+    }
+    memory_zero(strhashmap->table, size);
+}
+
 b8 strhashmap_set(strhashmap_t* strhashmap, str_t key, str_t value) {
+    if (str_is_null(key) || str_is_null(value)) {
+        return false;
+    }
+    if (str_is_empty(key) || str_is_empty(value)) {
+        return false;
+    }
     if (strhashmap->length >= (u64)(strhashmap->capacity * STRHASHMAP_CAPACITY_THRESHHOLD)) {
         strhashmap_resize(strhashmap, strhashmap->capacity * STRHASHMAP_GROW_FACTOR);
     }    
@@ -175,4 +185,3 @@ void strhashmap_deinit(strhashmap_t* strhashmap) {
     strhashmap->length = 0;
     strhashmap->capacity = 0;
 }
-
