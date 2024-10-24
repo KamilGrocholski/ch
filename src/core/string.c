@@ -86,6 +86,7 @@ void string_destroy(string_t string) {
     string_header_t* header = string_header(string);
     u64 size = sizeof(string_header_t) + header->capacity;
     if (header->allocator) {
+        header->allocator->free(header->allocator->context, header, size);
     } else {
         memory_free(header, size, MEMORY_TAG_STRING);
     }
@@ -103,6 +104,7 @@ static string_header_t* _header_allocate(allocator_t* allocator, u64 length) {
     u64 capacity = length + 1;
     u64 size = capacity + sizeof(string_header_t);
     if (allocator) {
+        header = allocator->allocate(allocator->context, size);
     } else {
         header = memory_allocate(size, MEMORY_TAG_STRING);
     }
