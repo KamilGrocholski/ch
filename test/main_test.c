@@ -4,6 +4,7 @@
 #include "core/hashmap_test.h"
 #include "core/strhashmap_test.h"
 #include "core/string_test.h"
+#include "core/array_test.h"
 #include "core/str_test.h"
 /*#include "net/http/http_test.h"*/
 #include "net/http/request_test.h"
@@ -15,6 +16,7 @@
 int main() {
     test_manager_init();
 
+    array__register_test();
     arena__register_test();
     string__register_test();
     str__register_test();
