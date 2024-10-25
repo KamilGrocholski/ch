@@ -6,6 +6,7 @@
 #include "core/assert.h"
 #include "fs/fs.h"
 #include "net/http.h"
+#include "net/url.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -20,8 +21,8 @@ void handle_users(http_response_writer_t writer, http_request_t* request) {
 int main() {
     memory_init();
 
-    http_server_t server = {0};
-    const u64 request_stack_buffer_size = 4 * 1024 * 1024;
+    http_server_t server;
+    const u64 request_stack_buffer_size = MEBIBYTES(4);
     http_server_init(&server, request_stack_buffer_size);
 
     http_server_get(&server, "/users", handle_users);

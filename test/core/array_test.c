@@ -21,6 +21,8 @@ u8 array__should_append(void) {
         expect_eq(i, values[i]);
     }
 
+    array_destroy(values);
+
     return true;
 }
 

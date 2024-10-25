@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-typedef struct {
+typedef struct http_method_entry_t {
     const char* cstr;
     u32 length;
     http_method_t method;

@@ -27,10 +27,15 @@ void url_query_init(allocator_t* allocator, url_query_t* dest) {
 }
 
 void url_query_deinit(url_query_t* query) {
+    if (!query) {
+        LOG_ERROR("url_query_deinit - called with query 0.");
+        return;
+    }
     strhashmap_deinit(&query->values);
 }
 
 b8 url_query_parse(str_t raw_query, url_query_t* dest) {
+    ASSERT(dest);
     if (str_is_null(raw_query) || str_is_empty(raw_query)) {
         return false;
     }

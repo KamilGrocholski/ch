@@ -51,11 +51,8 @@ b8 http_request_parse(str_t raw_request, http_request_t* dest) {
         key = str_pop_first_split(&header_line, str_from_cstr(": "));
         value = header_line;
 
-        b8 should_parse_pair = !str_is_null(key) && !str_is_null(value) && !str_is_empty(key) && !str_is_empty(value);
-        if (should_parse_pair) {
-            if (!strhashmap_set(&dest->headers, key, value)) {
-                return false;
-            }
+        if (!strhashmap_set(&dest->headers, key, value)) {
+            return false;
         }
         header_line = str_pop_first_split_char(&headers, '\n');
     }

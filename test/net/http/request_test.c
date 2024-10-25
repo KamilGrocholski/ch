@@ -13,7 +13,6 @@
 u8 http_request__should_be_parsed(void) {
     http_request_t request = {0};
     http_request_init(0, &request);
-    return true;
     const char* method = "GET";
     const char* path = "/";
     const char* proto = "HTTP1.1";

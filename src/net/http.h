@@ -7,6 +7,8 @@
 
 typedef struct http_request_t http_request_t;
 
+b8 http_router_path_parse(str_t path, str_t** out_params);
+
 // -- handler start
 typedef struct http_response_writer_t {
 } http_response_writer_t;
@@ -52,9 +54,15 @@ b8 http_request_parse(str_t raw_request, http_request_t* dest);
 // -- request end
 
 // -- router start
+typedef struct param_entry_t {
+    u32 segment_index;
+    str_t literal;
+} param_entry_t;
+
 typedef struct trie_node_t {
     struct trie_node_t* children[128];
     http_handler_t handlers[_HTTP_METHOD_MAX];
+    param_entry_t* params;
 } trie_node_t;
 
 trie_node_t* trie_node_create();
