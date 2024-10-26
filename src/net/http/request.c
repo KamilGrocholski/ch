@@ -6,10 +6,16 @@
 
 void http_request_init(allocator_t* allocator, http_request_t* dest) {
     strhashmap_init(allocator, &dest->headers);
+    strhashmap_init(allocator, &dest->params);
 }
 
 void http_request_deinit(http_request_t* request) {
+    if (!request) {
+        LOG_ERROR("http_request_deinit - called with request 0.");
+        return;
+    }
     strhashmap_deinit(&request->headers);
+    strhashmap_deinit(&request->params);
 }
 
 b8 http_request_parse(str_t raw_request, http_request_t* dest) {

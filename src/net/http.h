@@ -33,6 +33,7 @@ typedef struct http_request_t {
     str_t proto;
     strhashmap_t headers; 
     str_t body;
+    strhashmap_t params;
 } http_request_t;
 
 typedef struct http_response_writer_t {

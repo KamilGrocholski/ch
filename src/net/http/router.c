@@ -26,7 +26,8 @@ http_handler_t http_router_search(http_router_t* router, http_method_t method, s
     if (!node) {
         return 0;
     }
-    return node->handlers[method];
+    http_handler_t handler = node->handlers[method];
+    return handler;
 }
 
 void http_router_add(http_router_t* router, http_method_t method, const char* path, http_handler_t handler) {
@@ -44,11 +45,10 @@ static http_router_node_t* http_router_find_route_node(http_router_t* router, ht
     while (!str_is_empty(rest)) {
         str_t segment = str_pop_first_split_char(&rest, '/');
         b8 is_segment_empty = str_is_empty(segment);
-        if (!is_segment_empty && segment.length != segment_index) {
-            return false;
+        if (!is_segment_empty && segment.length <= segment_index) {
+            return 0;
         }
-        http_router_segment_t router_segment = curr->pattern.segments[segment_index];
-        segment_index++;
+        http_router_segment_t router_segment = curr->pattern.segments[segment_index++];
 
         if (router_segment.is_wildcard) {
             if (is_segment_empty) {
@@ -61,7 +61,7 @@ static http_router_node_t* http_router_find_route_node(http_router_t* router, ht
         }
 
         for (u64 i = 0; i < segment.length; i++) {
-            curr = &(curr->children[i]);
+            curr = &(curr->children[(u8)segment.data[i]]);
             if (!curr) {
                 return 0;
             }
@@ -85,7 +85,6 @@ static b8 http_router_add_route(http_router_t* router, http_method_t method, str
 
     u64 segment_index = 0;
     str_t rest = str_cut_prefix(path, str_from_cstr("/"));
-    LOG_DEBUG("%.*s", rest.length, rest.data);
     while (!str_is_empty(rest)) {
         str_t segment = str_pop_first_split_char(&rest, '/');
         b8 is_param = str_has_prefix(segment, str_from_cstr(":"));
@@ -103,7 +102,6 @@ static b8 http_router_add_route(http_router_t* router, http_method_t method, str
                 .is_wildcard = false,
             };
              for (u64 i = 0; i < segment.length; i++) {
-                 LOG_DEBUG("children length: %llu, i: %llu, ch: %c", array_length(&curr->children), i, segment.data[i]);
                  curr = &(curr->children[(u8)segment.data[i]]);
                  upsert_children(curr);
                  ASSERT_MSG(curr, "http_router_add_route - internal curr MUST be there");
@@ -111,10 +109,7 @@ static b8 http_router_add_route(http_router_t* router, http_method_t method, str
              }
             curr->pattern.segments[curr->pattern.segments_length++] = new_router_segment;
         }
-        if (!curr->children) {
-            curr->children = array_create_with_capacity(0, http_router_node_t, HTTP_ROUTER_NODE_MAX_CAPACITY);
-            ASSERT_MSG(curr->children, "http_router_add_route - children allocation failed");
-        }
+        upsert_children(curr);
         segment_index++;
     }
 
@@ -124,6 +119,10 @@ static b8 http_router_add_route(http_router_t* router, http_method_t method, str
         return false;
     }
     curr->handlers[method] = handler;
+    if (curr->handlers[method] == 0) {
+        LOG_FATAL("http_router_add_route - handler is 0 after set for [%s %.*s].",
+                http_method_to_cstr(method), path.length, path.data);
+    }
 
     return true;
 }
