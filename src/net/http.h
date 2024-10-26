@@ -5,17 +5,6 @@
 #include "core/memory.h"
 #include "core/strhashmap.h"
 
-typedef struct http_request_t http_request_t;
-
-b8 http_router_path_parse(str_t path, str_t** out_params);
-
-// -- handler start
-typedef struct http_response_writer_t {
-} http_response_writer_t;
-
-typedef void (*http_handler_t)(http_response_writer_t writer, http_request_t* request);
-// -- handler end
-
 // -- method start
 typedef enum http_method_t {
     HTTP_METHOD_GET,
@@ -46,6 +35,11 @@ typedef struct http_request_t {
     str_t body;
 } http_request_t;
 
+typedef struct http_response_writer_t {
+} http_response_writer_t;
+
+typedef void (*http_handler_t)(http_response_writer_t writer, http_request_t* request);
+
 void http_request_init(allocator_t* allocator, http_request_t* dest);
 
 void http_request_deinit(http_request_t* request);
@@ -54,36 +48,38 @@ b8 http_request_parse(str_t raw_request, http_request_t* dest);
 // -- request end
 
 // -- router start
-typedef struct param_entry_t {
-    u32 segment_index;
+#define HTTP_ROUTER_PATTERN_SEGMENTS_MAX_CAPACITY (32)
+
+typedef struct http_router_segment_t {
     str_t literal;
-} param_entry_t;
+    b8 is_wildcard;
+} http_router_segment_t;
 
-typedef struct trie_node_t {
-    struct trie_node_t* children[128];
+typedef struct http_router_pattern_t {
+    str_t src;
+    http_router_segment_t segments[HTTP_ROUTER_PATTERN_SEGMENTS_MAX_CAPACITY];
+    u64 segments_length;
+} http_router_pattern_t;
+
+#define HTTP_ROUTER_NODE_MAX_CAPACITY (127)
+
+typedef struct http_router_node_t {
+    http_router_pattern_t pattern;
     http_handler_t handlers[_HTTP_METHOD_MAX];
-    param_entry_t* params;
-} trie_node_t;
-
-trie_node_t* trie_node_create();
-
-void trie_node_destroy_all_nodes(trie_node_t* root);
-
-void trie_insert(trie_node_t* root, http_method_t method, const char* key, http_handler_t handler);
-
-http_handler_t trie_search(trie_node_t* root, http_method_t method, str_t key);
+    struct http_router_node_t* children;
+} http_router_node_t;
 
 typedef struct http_router_t {
-    trie_node_t* root;
+    http_router_node_t root;
 } http_router_t;
 
 void http_router_init(http_router_t* router);
 
 void http_router_deinit(http_router_t* router);
 
-http_handler_t http_router_search(http_router_t* router, http_method_t method, str_t key);
+http_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, strhashmap_t* out_params);
 
-void http_router_add(http_router_t* router, http_method_t method, const char*, http_handler_t handler);
+void http_router_add(http_router_t* router, http_method_t method, const char* path, http_handler_t handler);
 // -- router end
 
 // -- server start

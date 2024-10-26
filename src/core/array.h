@@ -20,6 +20,8 @@ typedef struct array_header_t {
 
 #define array_create(allocator, type) (type*)_array_allocate(sizeof(type), ARRAY_DEFAULT_CAPACITY, allocator)
 
+#define array_create_with_capacity(allocator, type, capacity) (type*)_array_allocate(sizeof(type), capacity, allocator)
+
 #define array_append(array, item) do { \
     (array) = array_maybe_resize(array, array_length(array) + 1); \
     (array)[array_length(array)++] = (item); \
