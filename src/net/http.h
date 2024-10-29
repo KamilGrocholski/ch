@@ -47,6 +47,8 @@ void http_request_init(allocator_t* allocator, http_request_t* dest);
 
 void http_request_deinit(http_request_t* request);
 
+string_t http_request_to_string(allocator_t* allocator, http_request_t* request);
+
 b8 http_request_parse(str_t raw_request, http_request_t* dest);
 // -- request end
 
@@ -67,14 +69,11 @@ typedef struct http_router_t {
     http_router_node_t root;
 } http_router_t;
 
-string_t http_router_to_string(http_router_t* router);
-
 void http_router_init(http_router_t* router);
 
 void http_router_deinit(http_router_t* router);
 
-http_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, 
-    str_t* out_params);
+http_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, str_t* out_params);
 
 void http_router_add(http_router_t* router, http_method_t method, const char* path, http_handler_t handler);
 // -- router end

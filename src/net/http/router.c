@@ -48,8 +48,8 @@ static http_router_node_t* http_router_match(http_router_t* router, http_method_
     
     http_router_node_t* curr = &router->root;
     str_t rest = path;
-    if (str_has_prefix(rest, str_from_cstr(":"))) {
-        rest = str_cut_prefix(rest, str_from_cstr(":"));
+    if (str_has_prefix(rest, str_from_cstr("/"))) {
+        rest = str_cut_prefix(rest, str_from_cstr("/"));
     }
     u64 param_index = 0;
 

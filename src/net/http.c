@@ -33,6 +33,13 @@ static void handle_client(http_server_t* server, i32 socket) {
         LOG_ERROR("handle_client - http request parsing failed");
         goto cleanup;
     }
+    string_t stringified_parsed_request = http_request_to_string(0, &request);
+    if (stringified_parsed_request) {
+        LOG_INFO("%s", stringified_parsed_request);
+        string_destroy(stringified_parsed_request);
+    } else {
+        LOG_ERROR("request: [could not stringify]");
+    }
     http_handler_t handler = http_router_search(&server->router, request.method, request.path, &request.params);
     if (!handler) {
         LOG_ERROR("TODO - add 404");
