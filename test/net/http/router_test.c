@@ -43,6 +43,7 @@ u8 http_router__should_register_route_and_find_handler(void) {
     request.path = str_from_cstr("users");
     request.proto = str_from_cstr("HTTP1.1");
     request.body = str_from_cstr("body");
+    expect_str_eq_cstr(request.params[0], "234");
     handler((http_response_writer_t){0}, &request);
 
     http_router_deinit(&router);

@@ -77,21 +77,20 @@ static http_router_node_t* http_router_match(http_router_t* router, http_method_
 
         if (!found && param_match) {
             curr = param_match;
-            param_index++;
             if (param_index >= HTTP_REQUEST_PARAMS_MAX_CAPACITY) {
                 return 0;
             }
-            out_params[param_index] = segment;
+            out_params[param_index++] = segment;
             found = true;
         }
         
         if (!found && wildcard_match) {
             curr = wildcard_match;
-            param_index++;
+            param_index;
             if (param_index >= HTTP_REQUEST_PARAMS_MAX_CAPACITY) {
                 return 0;
             }
-            out_params[param_index] = rest;
+            out_params[param_index++] = rest;
             found = true;
             break;
         }
