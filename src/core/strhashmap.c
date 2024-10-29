@@ -70,7 +70,7 @@ b8 strhashmap_set(strhashmap_t* strhashmap, str_t key, str_t value) {
     if (str_is_null(key) || str_is_null(value)) {
         return false;
     }
-    if (str_is_empty(key) || str_is_empty(value)) {
+    if (str_is_empty(key)) {
         return false;
     }
     if (strhashmap->length >= (u64)(strhashmap->capacity * STRHASHMAP_CAPACITY_THRESHHOLD)) {
