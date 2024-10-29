@@ -1,17 +1,17 @@
 # HTTP server
 
-<p>Building a simple HTTP server written in C, designed to look like today's web frameworks.</p>
+<p>Building a simple HTTP server in C, inspired by modern web frameworks.</p>
 
 ## Source tree
 ```plaintext
 ├── main.c              # Entry file of the server
-├── core                # Core utils memory management, strings, arrays, etc.
+├── core                # Core utils for memory management, strings, arrays, etc.
 │   ├── arena.c
 │   ├── arena.h
 │   ├── array.c
 │   ├── array.h         # Dynamic arrays with metadata headers
 │   ├── assert.h        # Custom asserts
-│   ├── defines.h       # Common macro utils and types like u32, i32...
+│   ├── defines.h       # Common macro utilities and type definitions (e.g., u32, i32)
 │   ├── hashmap.c
 │   ├── hashmap.h
 │   ├── logger.c
@@ -23,7 +23,7 @@
 │   ├── strhashmap.c
 │   ├── strhashmap.h    # Hashmap but for str_t only keys and values
 │   ├── string.c
-│   ├── string.h        # C strings with metadata header
+│   ├── string.h        # C strings with metadata headers
 ├── fs                  # Filesystem utils
 │   ├── fs.c
 │   └── fs.h
