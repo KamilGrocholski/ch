@@ -121,6 +121,10 @@ b8 str_is_null(str_t str) {
     return str.data == 0;
 }
 
+b8 str_is_null_or_empty(str_t str) {
+    return str_is_null(str) || str_is_empty(str);
+}
+
 b8 str_compare(str_t a, str_t b) {
     if (a.length != b.length) {
         return false;
@@ -133,8 +137,8 @@ b8 str_compare(str_t a, str_t b) {
     return true;
 }
 
-b8 str_compare_char(str_t a, char ch) {
-    return a.length == 1 && a.data[0] == ch;
+b8 str_compare_char(str_t a, char ch, u64 index) {
+    return a.length > index && a.data[index] == ch;
 }
 
 b8 str_contains(str_t str, str_t substr) {
