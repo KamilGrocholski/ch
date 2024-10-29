@@ -3,6 +3,7 @@
 <p>Building a simple HTTP server written in C, designed to look like today's web frameworks.</p>
 
 ## Source tree
+```plaintext
 ├── main.c              # Entry file of the server
 ├── core                # Core utils memory management, strings, arrays, etc.
 │   ├── arena.c
@@ -35,6 +36,7 @@
     ├── http.h          # All in one HTTP header
     ├── url.c
     └── url.h
+```
 
 ## How to setup
 
