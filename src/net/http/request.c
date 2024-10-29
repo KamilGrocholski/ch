@@ -5,8 +5,8 @@
 #include "core/strhashmap.h"
 
 void http_request_init(allocator_t* allocator, http_request_t* dest) {
+    *dest = (http_request_t){0};
     strhashmap_init(allocator, &dest->headers);
-    strhashmap_init(allocator, &dest->params);
 }
 
 void http_request_deinit(http_request_t* request) {

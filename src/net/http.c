@@ -33,9 +33,7 @@ static void handle_client(http_server_t* server, i32 socket) {
         LOG_ERROR("handle_client - http request parsing failed");
         goto cleanup;
     }
-    strhashmap_t params = {0};
-    strhashmap_init(0, &params);
-    http_handler_t handler = http_router_search(&server->router, request.method, request.path, &params);
+    http_handler_t handler = http_router_search(&server->router, request.method, request.path, &request.params);
     if (!handler) {
         LOG_ERROR("TODO - add 404");
     } else {

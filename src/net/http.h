@@ -2,6 +2,7 @@
 
 #include "core/defines.h"
 #include "core/str.h"
+#include "core/string.h"
 #include "core/memory.h"
 #include "core/strhashmap.h"
 
@@ -26,6 +27,7 @@ const char* http_method_to_cstr(http_method_t method);
 #define HTTP_REQUEST_HEADERS_MIN_CAPACITY (32)
 #define HTTP_REQUEST_HEADERS_GROW_FACTOR (2)
 #define HTTP_REQUEST_HEADERS_CAPACITY_THRESHHOLD (0.75f)
+#define HTTP_REQUEST_PARAMS_MAX_CAPACITY (32)
 
 typedef struct http_request_t {
     http_method_t method;
@@ -33,7 +35,7 @@ typedef struct http_request_t {
     str_t proto;
     strhashmap_t headers; 
     str_t body;
-    strhashmap_t params;
+    str_t params[HTTP_REQUEST_PARAMS_MAX_CAPACITY];
 } http_request_t;
 
 typedef struct http_response_writer_t {
@@ -49,36 +51,30 @@ b8 http_request_parse(str_t raw_request, http_request_t* dest);
 // -- request end
 
 // -- router start
-#define HTTP_ROUTER_PATTERN_SEGMENTS_MAX_CAPACITY (32)
-
-typedef struct http_router_segment_t {
-    str_t literal;
-    b8 is_wildcard;
-} http_router_segment_t;
-
-typedef struct http_router_pattern_t {
-    str_t src;
-    http_router_segment_t segments[HTTP_ROUTER_PATTERN_SEGMENTS_MAX_CAPACITY];
-    u64 segments_length;
-} http_router_pattern_t;
-
-#define HTTP_ROUTER_NODE_MAX_CAPACITY (127)
+#define HTTP_ROUTER_CHILDREN_MAX_CAPACITY (127)
 
 typedef struct http_router_node_t {
-    http_router_pattern_t pattern;
-    http_handler_t handlers[_HTTP_METHOD_MAX];
-    struct http_router_node_t* children;
+    str_t segment; // static | param | wildcard
+    http_handler_t method_handlers[_HTTP_METHOD_MAX];
+    struct http_router_node_t* children[HTTP_ROUTER_CHILDREN_MAX_CAPACITY];
+    b8 is_param; // e.g. ':id'
+    b8 is_wildcard; // e.g. '*'
 } http_router_node_t;
+
+string_t http_router_node_to_string(http_router_node_t* node, str_t path_prefix);
 
 typedef struct http_router_t {
     http_router_node_t root;
 } http_router_t;
 
+string_t http_router_to_string(http_router_t* router);
+
 void http_router_init(http_router_t* router);
 
 void http_router_deinit(http_router_t* router);
 
-http_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, strhashmap_t* out_params);
+http_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, 
+    str_t* out_params);
 
 void http_router_add(http_router_t* router, http_method_t method, const char* path, http_handler_t handler);
 // -- router end
