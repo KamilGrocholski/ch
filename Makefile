@@ -38,7 +38,7 @@ test: $(OBJS)
 	@$(BIN_DIR)/$(NAME)_test
 
 check: $(NAME)
-	valgrind -s --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$<
+	valgrind -s --track-origins=yes --leak-check=full --show-leak-kinds=all $(BIN_DIR)/$<
 
 setup:
 
