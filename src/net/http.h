@@ -80,6 +80,8 @@ b8 http_response_send_no_content(http_response_t* response, http_status_t status
 
 b8 http_response_send_text(http_response_t* response, http_status_t status, str_t text);
 
+b8 http_response_send_file(http_response_t* response, http_status_t status, const char* path);
+
 b8 http_response_send(http_response_t* response, http_status_t status, str_t data);
 
 #define HTTP_REQUEST_HEADERS_MIN_CAPACITY (32)

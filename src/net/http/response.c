@@ -3,15 +3,15 @@
 #include "core/logger.h"
 #include "core/assert.h"
 #include "core/strhashmap.h"
+#include "fs/fs.h"
 
+#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-
-#include <stdio.h>
 
 b8 http_response_init(http_response_t* dest) {
     ASSERT(dest);
@@ -42,13 +42,25 @@ b8 http_response_send_no_content(http_response_t* response, http_status_t status
 }
 
 b8 http_response_send_text(http_response_t* response, http_status_t status, str_t text) {
-    if (!http_response_status_set(response, status)) {
-        return false;
-    }
     if (!http_response_headers_set(response, str_from_cstr("Content-Type"), str_from_cstr("text/plain"))) {
         return false;
     }
     return http_response_send(response, status, text);
+}
+
+b8 http_response_send_file(http_response_t* response, http_status_t status, const char* path) {
+    if (!fs_exists(path)) {
+        return false;
+    }
+    string_t content = fs_read_entire_text(0, path);
+    if (!content) {
+        return false;
+    }
+    
+    b8 ok = http_response_send(response, status, string_to_str(content));
+    string_destroy(content);
+
+    return ok;
 }
 
 b8 http_response_send(http_response_t* response, http_status_t status, str_t data) {
@@ -88,8 +100,10 @@ b8 http_response_send(http_response_t* response, http_status_t status, str_t dat
     i32 bytes_sent = send(response->client_fd, string, string_length(string), 0);
     if (bytes_sent == -1) {
         LOG_DEBUG("http_response_send - could not send the response");
+        string_destroy(string);
         return false;
     }
     LOG_DEBUG("http_response_send - sent %d bytes", bytes_sent);
+    string_destroy(string);
     return true;
 }
