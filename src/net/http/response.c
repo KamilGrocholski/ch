@@ -52,7 +52,13 @@ b8 http_response_send_text(http_response_t* response, http_status_t status, str_
 }
 
 b8 http_response_send(http_response_t* response, http_status_t status, str_t data) {
-    LOG_DEBUG("sending...");
+    char data_length[64];
+    sprintf(data_length, "%llu", data.length);
+    if (!http_response_headers_set(response, str_from_cstr("Content-Length"), str_from_cstr(data_length))) {
+        LOG_DEBUG("http_response_send - could not set Content-Length header");
+        return false;
+    }
+
     string_t string = string_create(0, "HTTP/1.1");
     if (!string) {
         LOG_DEBUG("no string");
