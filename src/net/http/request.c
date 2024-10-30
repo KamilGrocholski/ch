@@ -47,7 +47,7 @@ b8 http_request_parse(str_t raw_request, http_request_t* out_request) {
     }
 
     // Split headers and body
-    str_t headers = str_pop_first_split(&raw_request, str_from_cstr("\n\n"));
+    str_t headers = str_pop_first_split(&raw_request, str_from_cstr("\r\n"));
     str_t body = raw_request;
     out_request->body = body;
 

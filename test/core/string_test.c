@@ -86,14 +86,16 @@ u8 string__should_append_format(void) {
     string_t string = string_create(0, "");
     expect_neq(0, string);
 
-    const char* format = "%s: %d";
-    const char* seg1 = "value";
+    const char* format = "%.*s: %d, %s, %.*s";
+    str_t seg1 = str_from_cstr("seg11.1");
     int seg2 = 100;
-    char expected_formatted[1000];
-    sprintf(expected_formatted, format, seg1, seg2);
+    const char* seg3 = "value";
+    str_t seg4 = str_from_cstr("httpsmth");
+    char expected_formatted[2000];
+    sprintf(expected_formatted, format, seg1.length, seg1.data, seg2, seg3, seg4.length, seg4.data);
     u32 expected_length = strlen(expected_formatted);
 
-    string = string_append_format(string, format, seg1, seg2);
+    string = string_append_format(string, format, seg1.length, seg1.data, seg2, seg3, seg4.length, seg4.data);
     expect_eq(expected_length, strlen(string));
     expect_eq('\0', string[strlen(string)]);
     expect_eq(expected_length, string_length(string));

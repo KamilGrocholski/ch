@@ -40,15 +40,20 @@ static void handle_client(http_server_t* server, i32 socket) {
     } else {
         LOG_ERROR("request: [could not stringify]");
     }
+    http_response_t response = {0};
+    http_response_init(&response);
+    response.client_fd = client_fd;
+    response.origin_request = &request;
     http_handler_t handler = http_router_search(&server->router, request.method, request.path, &request.params);
     if (!handler) {
         LOG_ERROR("TODO - add 404");
     } else {
-        handler((http_response_writer_t){0}, &request);
+        handler(&response, &request);
     }
 
 cleanup: 
     http_request_deinit(&request);
+    http_response_deinit(&response);
     close(client_fd);
     memory_report();
 }

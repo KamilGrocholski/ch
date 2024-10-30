@@ -117,8 +117,13 @@ static http_router_node_t* http_router_node_maybe_create(http_router_node_t* tar
     
     http_router_node_t* node = memory_allocate(sizeof(http_router_node_t), MEMORY_TAG_TRIE_NODE);
     ASSERT_MSG(node, "http_router_node_maybe_create - failed node memory allocation");
-    memory_zero(node->children, sizeof(node->children));
-    memory_zero(node->method_handlers, sizeof(node->method_handlers));
+    memory_zero(node, sizeof(http_router_node_t));
+    for (u64 i = 0; i < _HTTP_METHOD_MAX; i++) {
+        node->method_handlers[i] = 0;
+    }
+    for (u64 i = 0; i < HTTP_ROUTER_CHILDREN_MAX_CAPACITY; i++) {
+        node->children[i] = 0;
+    }
     node->segment = STR_NULL;
     node->is_param = false;
     node->is_wildcard = false;
@@ -145,7 +150,10 @@ static b8 http_router_add_route(http_router_t* router, http_method_t method, str
 
         b8 is_found = false;
 
-        for (u64 i = 0; i < HTTP_ROUTER_CHILDREN_MAX_CAPACITY && curr->children[i]; i++) {
+        for (u64 i = 0; i < HTTP_ROUTER_CHILDREN_MAX_CAPACITY; i++) {
+            if (!curr->children[i]) {
+                break;
+            }
             if (str_compare(curr->children[i]->segment, segment) ||
                 (is_param && curr->children[i]->is_param) ||
                 (is_wildcard && curr->children[i]->is_wildcard)) {
