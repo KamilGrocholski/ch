@@ -22,10 +22,10 @@ b8 http_response_init(http_response_t* dest) {
 void http_response_deinit(http_response_t* response) {
     if (!response) {
         LOG_ERROR("http_response_deinit - called with response 0.");
-        return false;
+        return;
     }
     strhashmap_init(0, &response->headers);
-    return true;
+    return;
 }
 
 b8 http_response_headers_set(http_response_t* response, str_t key, str_t value) {
@@ -63,10 +63,10 @@ b8 http_response_send_file(http_response_t* response, http_status_t status, cons
     return ok;
 }
 
-b8 http_response_send(http_response_t* response, http_status_t status, str_t data) {
-    char data_length[64];
-    sprintf(data_length, "%llu", data.length);
-    if (!http_response_headers_set(response, str_from_cstr("Content-Length"), str_from_cstr(data_length))) {
+b8 http_response_send(http_response_t* response, http_status_t status, str_t content) {
+    char content_length_literal[64];
+    sprintf(content_length_literal, "%llu", content.length);
+    if (!http_response_headers_set(response, str_from_cstr("Content-Length"), str_from_cstr(content_length_literal))) {
         LOG_DEBUG("http_response_send - could not set Content-Length header");
         return false;
     }
@@ -89,7 +89,7 @@ b8 http_response_send(http_response_t* response, http_status_t status, str_t dat
         }
     }
     
-    string = string_append_format(string, "\r\n%.*s", data.length, data.data);
+    string = string_append_format(string, "\r\n%.*s", content.length, content.data);
     if (!string) {
         LOG_DEBUG("no string 2");
         return false;

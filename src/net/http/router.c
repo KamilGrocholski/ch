@@ -7,7 +7,7 @@
 #include "core/strhashmap.h"
 
 static b8 http_router_add_route(http_router_t* router, http_method_t method, str_t path, http_handler_t handler);
-static http_router_node_t* http_router_match(http_router_t* router, http_method_t method, str_t path, str_t* out_params);
+static http_router_node_t* http_router_match(http_router_t* router, http_method_t method, str_t path, str_t (*out_params)[]);
 
 void http_router_init(http_router_t* router) {
     (void)router;
@@ -21,8 +21,7 @@ void http_router_deinit(http_router_t* router) {
     (void)router;
 }
 
-http_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, 
-    str_t* out_params) {
+http_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, str_t (*out_params)[]) {
     http_router_node_t* node = http_router_match(router, method, path, out_params);
     if (!node) {
         LOG_DEBUG("http_router_search - handler NOT found for [%s %.*s]", http_method_to_cstr(method), path.length, path.data);
@@ -41,8 +40,7 @@ void http_router_add(http_router_t* router, http_method_t method, const char* pa
     ASSERT(http_router_add_route(router, method, str_from_cstr(path), handler));
 }
 
-static http_router_node_t* http_router_match(http_router_t* router, http_method_t method, str_t path, 
-    str_t* out_params) {
+static http_router_node_t* http_router_match(http_router_t* router, http_method_t method, str_t path, str_t (*out_params)[]) {
 
     LOG_DEBUG("http_router_match - matching [%s %.*s]", http_method_to_cstr(method), path.length, path.data);
     
@@ -80,17 +78,16 @@ static http_router_node_t* http_router_match(http_router_t* router, http_method_
             if (param_index >= HTTP_REQUEST_PARAMS_MAX_CAPACITY) {
                 return 0;
             }
-            out_params[param_index++] = segment;
+            (*out_params)[param_index++] = segment;
             found = true;
         }
         
         if (!found && wildcard_match) {
             curr = wildcard_match;
-            param_index;
             if (param_index >= HTTP_REQUEST_PARAMS_MAX_CAPACITY) {
                 return 0;
             }
-            out_params[param_index++] = rest;
+            (*out_params)[param_index++] = rest;
             found = true;
             break;
         }

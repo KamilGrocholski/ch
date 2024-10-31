@@ -7,7 +7,7 @@
 #include "../test_manager.h"
 
 u8 array__should_append(void) {
-    i32* values = array_create(0, i32);
+    u64* values = array_create(0, u64);
     u64 expected_length = 5;
     for (u64 i = 0; i < expected_length; i++) {
         array_append(values, i);

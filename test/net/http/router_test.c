@@ -12,14 +12,17 @@
 #include <stdio.h>
 
 void handle_user_id(http_response_t* response, http_request_t* request) {
+    (void)response;
     (void)request;
 }
 
 void handle_user_id_okej(http_response_t* response, http_request_t* request) {
+    (void)response;
     (void)request;
 }
 
 void handle_user_id_friends(http_response_t* response, http_request_t* request) {
+    (void)response;
     (void)request;
 }
 

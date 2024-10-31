@@ -18,11 +18,11 @@ u8 hashmap__should_create_and_destroy(void) {
 u8 hashmap__should_put_and_get(void) {
     hashmap_t* hashmap = hashmap_create(0, sizeof(char*));
     const char* value = "value";
-    expect_eq(true, hashmap_put(hashmap, "key", value));
+    expect_eq(true, hashmap_put(hashmap, "key", (void*)value));
     char* got;
-    b8 ok = hashmap_get(hashmap, "key", &got);
+    b8 ok = hashmap_get(hashmap, "key", (void*)&got);
     expect_eq(true, ok);
-    expect_eq(true, strncmp(got, "value", 5) == 0);
+    expect_eq(true, (strncmp(got, "value", 5) == 0));
     hashmap_destroy(hashmap);
     return true;
 }
@@ -32,7 +32,7 @@ u8 hashmap__should_resize(void) {
     for (u64 i = 0; i < HASHMAP_DEFAULT_CAPACITY * 2; i++) {
         expect_eq(true, hashmap_put(hashmap, "key", &i));
         u64 got;
-        b8 ok = hashmap_get(hashmap, "key", &got);
+        b8 ok = hashmap_get(hashmap, "key", (void*)&got);
         expect_eq(true, ok);
         expect_eq(i, i);
     }
