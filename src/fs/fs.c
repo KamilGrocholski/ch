@@ -68,17 +68,23 @@ string_t fs_read_entire_text(allocator_t* allocator, const char* filepath) {
         fs_close(&f);
         return 0;
     }
-    string_t string = string_from_parts(allocator, 0, size + 1);
-    u64 bytes_read = fread(string, 1, size, (FILE*)f.handle);
-    string_length_set(string, bytes_read);
-    string[bytes_read] = 0;
 
-    if (bytes_read < size) {
-        string_t copy = string_duplicate(string);
+    string_t string = string_from_parts(allocator, 0, size + 1);
+    if (!string) {
+        fs_close(&f);
+        return 0;
+    }
+
+    u64 bytes_read = fread(string, 1, size, (FILE*)f.handle);
+    if (bytes_read != size) {
+        LOG_ERROR("fs_read_entire_text - could not read entire file content");
         string_destroy(string);
         fs_close(&f);
-        return copy;
+        return 0;
     }
+
+    string_length_set(string, bytes_read);
+    string[bytes_read] = '\0';
 
     fs_close(&f);
     return string;
