@@ -113,11 +113,29 @@ u8 string__should_not_crash_on_null_string_destroy(void) {
     return true;
 }
 
+u8 string__should_append_format_many_times(void) {
+    string_t string = string_create(0, "");
+    expect_neq(0, string);
+
+    u64 n = 128;
+    for (u64 i = 0; i < n; i++) {
+        string = string_append_format(string, "%.*s", 4, "abcd");
+        expect_neq(0, string);
+    }
+
+    expect_eq(n * 4, string_length(string));
+    LOG_DEBUG(string);
+    string_destroy(string);
+
+    return true;
+}
+
 void string__register_test(void) {
     test_manager_register(string__should_create_and_destroy, "String should create and destroy");
     test_manager_register(string__should_create_from_parts, "String should create from parts");
     test_manager_register(string__should_append_string, "String should append string");
     test_manager_register(string__should_append_cstr, "String should append cstr");
     test_manager_register(string__should_append_format, "String should append format");
+    test_manager_register(string__should_append_format_many_times, "String should append format many times");
     test_manager_register(string__should_not_crash_on_null_string_destroy, "String should not crash on null string destroy");
 }
