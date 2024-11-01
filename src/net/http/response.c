@@ -50,14 +50,17 @@ b8 http_response_send_text(http_response_t* response, http_status_t status, str_
 
 b8 http_response_send_file(http_response_t* response, http_status_t status, const char* path) {
     if (!fs_exists(path)) {
+        LOG_DEBUG("http_response_send_file - file does not exist: '%s'", path);
         return false;
     }
     string_t content = fs_read_entire_text(0, path);
     if (!content) {
+        LOG_DEBUG("http_response_send_file - content is 0");
         return false;
     }
     
     b8 ok = http_response_send(response, status, string_to_str(content));
+    LOG_DEBUG("http_response_send_file - ok: %d", ok);
     string_destroy(content);
 
     return ok;
@@ -73,7 +76,7 @@ b8 http_response_send(http_response_t* response, http_status_t status, str_t con
 
     string_t string = string_create(0, "HTTP/1.1");
     if (!string) {
-        LOG_DEBUG("no string");
+        LOG_DEBUG("http_response_send - could not allocate initial string");
         return false;
     }
 
@@ -91,15 +94,15 @@ b8 http_response_send(http_response_t* response, http_status_t status, str_t con
     
     string = string_append_format(string, "\r\n%.*s", content.length, content.data);
     if (!string) {
-        LOG_DEBUG("no string 2");
+        LOG_DEBUG("http_response_send - no string 2");
         return false;
     }
 
-    LOG_DEBUG("final response:\n'%s'", string);
+    LOG_DEBUG("http_response_send - final response:\n'%s'", string);
 
     i32 bytes_sent = send(response->client_fd, string, string_length(string), 0);
     if (bytes_sent == -1) {
-        LOG_DEBUG("http_response_send - could not send the response");
+        LOG_DEBUG("http_response_send - could not send response");
         string_destroy(string);
         return false;
     }
