@@ -3,9 +3,10 @@
 #include "core/defines.h"
 #include "core/memory.h"
 #include "net/http.h"
+#include "fs/fs.h"
 
+#include <string.h>
 #include <stdio.h>
-#include <assert.h>
 
 void handle_makefile(http_response_t* response, http_request_t* request) {
     LOG_INFO("%s %.*s",
@@ -63,6 +64,7 @@ int main() {
 
     http_server_get(&server, "/makefile", handle_makefile);
     http_server_get(&server, "/users", handle_users);
+    http_server_get(&server, "/users/:id/void", handle_void);
     http_server_get(&server, "/users/:id", handle_user_id);
     http_server_get(&server, "/void", handle_void);
 
