@@ -194,6 +194,32 @@ u8 str__should_pop_first_split(void) {
     return true;
 }
 
+u8 str__should_convert_to_u64(void) {
+    str_t str = str_from_cstr("123");
+    u64 got;
+    u64 expected = 123;
+    b8 ok = str_to_u64(str, &got);
+    expect_true(ok);
+    expect_eq(expected, got);
+    return true;
+}
+
+u8 str__should_compare_n(void) {
+    str_t a = str_from_cstr("abcd");
+    str_t b = str_from_cstr("abc1234");
+    expect_true(str_compare_n(a, b, 3));
+    expect_true(str_compare_n(b, a, 3));
+    expect_false(str_compare_n(a, b, 4));
+    expect_false(str_compare_n(b, a, 4));
+    expect_false(str_compare_n(a, b, 100));
+    expect_false(str_compare_n(b, a, 100));
+    expect_true(str_compare_n(a, b, 1));
+    expect_true(str_compare_n(b, a, 1));
+    expect_true(str_compare_n(a, b, 0));
+    expect_true(str_compare_n(b, a, 0));
+    return true;
+}
+
 void str__register_test(void) {
     test_manager_register(str__should_create_from_cstr, "Str should create from cstr");
     test_manager_register(str__should_be_empty, "Str should be empty");
@@ -217,4 +243,6 @@ void str__register_test(void) {
     test_manager_register(str__should_contain, "Str should contain");
     test_manager_register(str__should_not_contain, "Str should not contain");
     test_manager_register(str__should_pop_first_split, "Str should pop first split");
+    test_manager_register(str__should_compare_n, "Str should compare n");
+    test_manager_register(str__should_convert_to_u64, "Str should convert to u64");
 }
