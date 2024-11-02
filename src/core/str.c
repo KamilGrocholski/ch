@@ -1,8 +1,10 @@
 #include "core/str.h"
 
 #include "core/defines.h"
+#include "core/logger.h"
 
 #include <string.h>
+#include <math.h>
 
 str_t str_from_parts(const char* data, u64 length) {
     return (str_t){
@@ -137,6 +139,16 @@ b8 str_compare(str_t a, str_t b) {
     return true;
 }
 
+b8 str_compare_n(str_t a, str_t b, u64 n) {
+    u64 length = MIN(MAX(a.length, b.length), n);
+    for (u64 i = 0; i < length; i++) {
+        if (a.data[i] != b.data[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 b8 str_compare_char(str_t a, char ch, u64 index) {
     return a.length > index && a.data[index] == ch;
 }
@@ -157,6 +169,9 @@ b8 str_has_prefix(str_t str, str_t prefix) {
 }
 
 b8 str_has_prefix_char(str_t str, char prefix) {
+    if (str.length < 1) {
+        return false;
+    }
     return str.data[0] == prefix;
 }
 
@@ -168,6 +183,9 @@ b8 str_has_suffix(str_t str, str_t suffix) {
 }
 
 b8 str_has_suffix_char(str_t str, char prefix) {
+    if (str.length < 1) {
+        return false;
+    }
     return str.data[str.length - 1] == prefix;
 }
 
@@ -179,4 +197,27 @@ u32 str_count_char(str_t str, char ch) {
         }
     }
     return n;
+}
+
+b8 str_to_u64(str_t str, u64* dest) {
+    char c0 = str.data[0];
+    u64 value = 0;
+    if (c0 >= '1' && c0 <= '9') {
+        value = (c0 - 48) * pow(10, str.length - 1);
+    } else {
+        return false;
+    }
+    for (u64 i = 1; i < str.length; i++) {
+        char c = str.data[str.length - i];
+        if (c >= '0' && c <= '9') {
+            if (i >= NUM_64_MAX_DIGITS) {
+                return false;
+            }
+            value += pow(10, i - 1) * (c - 48);
+        } else {
+            return false;
+        }
+    }
+    *dest = value;
+    return true;
 }

@@ -43,6 +43,8 @@ b8 str_is_null_or_empty(str_t str);
 
 b8 str_compare(str_t a, str_t b);
 
+b8 str_compare_n(str_t a, str_t b, u64 n);
+
 b8 str_compare_char(str_t a, char ch, u64 index);
 
 b8 str_contains(str_t str, str_t substr);
@@ -58,3 +60,5 @@ b8 str_has_suffix(str_t str, str_t suffix);
 b8 str_has_suffix_char(str_t str, char suffix);
 
 u32 str_count_char(str_t str, char ch);
+
+b8 str_to_u64(str_t str, u64* dest);

@@ -42,6 +42,11 @@ typedef int b32;
 #define I32_MIN (-I32_MAX - 1)
 #define I64_MIN (-I64_MAX - 1)
 
+#define NUM_8_MAX_DIGITS 3
+#define NUM_16_MAX_DIGITS 5
+#define NUM_32_MAX_DIGITS 10
+#define NUM_64_MAX_DIGITS 20
+
 #define GIBIBYTES(amount) ((amount) * 1024ULL * 1024ULL * 1024ULL)
 #define MEBIBYTES(amount) ((amount) * 1024ULL * 1024ULL)
 #define KIBIBYTES(amount) ((amount) * 1024ULL)
