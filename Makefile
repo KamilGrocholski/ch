@@ -3,13 +3,13 @@ NAME = main
 SRC_DIR = src
 BUILD_DIR = build
 INCLUDE_DIR = src
-LIB_DIR = lib
+LIB_DIR =
 TESTS_DIR = test
 BIN_DIR = bin
 
 ENTRYCFILE = $(SRC_DIR)/$(NAME).c
 SRCCFILES = $(shell find $(SRC_DIR) -type f -name "*.c" ! -name "$(NAME).c")
-LIBCFILES = $(shell find $(LIB_DIR) -type f -name "*.c")
+# LIBCFILES = $(shell find $(LIB_DIR) -type f -name "*.c")
 TESTCFILES = $(shell find $(TESTS_DIR) -type f -name "*.c")
 
 OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRCCFILES) $(LIBCFILES))
