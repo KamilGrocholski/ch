@@ -11,19 +11,22 @@
 
 #include <stdio.h>
 
-void handle_user_id(http_response_t* response, http_request_t* request) {
+http_result_t handle_user_id(http_response_t* response, http_request_t* request) {
     (void)response;
     (void)request;
+    return (http_result_t){.ok = true};
 }
 
-void handle_user_id_okej(http_response_t* response, http_request_t* request) {
+http_result_t handle_user_id_okej(http_response_t* response, http_request_t* request) {
     (void)response;
     (void)request;
+    return (http_result_t){.ok = true};
 }
 
-void handle_user_id_friends(http_response_t* response, http_request_t* request) {
+http_result_t handle_user_id_friends(http_response_t* response, http_request_t* request) {
     (void)response;
     (void)request;
+    return (http_result_t){.ok = true};
 }
 
 u8 http_router__should_register_route_and_find_handler(void) {
@@ -42,7 +45,7 @@ u8 http_router__should_register_route_and_find_handler(void) {
     http_request_init(0, &request);
     http_response_t response = {0};
     http_response_init(&response);
-    response.origin_request = &request;
+    response.request = &request;
     http_handler_t handler = http_router_search(&router, HTTP_METHOD_GET, str_from_cstr("users/234/friends"), &request.params);
     expect_neq(0, handler);
     expect_eq(handle_user_id_friends, handler);
