@@ -15,6 +15,14 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
+static http_result_t default_handle_not_found(http_response_t* response, http_request_t* request) {
+    return http_response_send_no_content(response, HTTP_STATUS_NOT_FOUND);
+}
+
+static http_result_t default_handle_internal_server_error(http_response_t* response, http_request_t* request) {
+    return http_response_send_no_content(response, HTTP_STATUS_INTERNAL_SERVER_ERROR);
+}
+
 static void handle_client(http_server_t* server, i32 socket) {
     i32 client_fd = accept(socket, 0, 0);
 
@@ -36,12 +44,25 @@ static void handle_client(http_server_t* server, i32 socket) {
     http_response_t response = {0};
     http_response_init(&response);
     response.client_fd = client_fd;
-    response.origin_request = &request;
+    response.request = &request;
     http_handler_t handler = http_router_search(&server->router, request.method, request.path, &request.params);
+    http_result_t result;
     if (!handler) {
-        LOG_ERROR("TODO - add 404");
+        if (server->handle_not_found) {
+            result = server->handle_not_found(&response, &request);
+        } else {
+            result = default_handle_not_found(&response, &request);
+        }
     } else {
-        handler(&response, &request);
+        result = handler(&response, &request);
+    }
+    if (!result.ok) {
+        LOG_ERROR("handle_client - result is not ok");
+        if (server->handle_internal_server_error) {
+            result = server->handle_internal_server_error(&response, &request);
+        } else {
+            result = default_handle_internal_server_error(&response, &request);
+        }
     }
 
 cleanup: 
@@ -78,6 +99,14 @@ void http_server_start(http_server_t* server, u16 port) {
     }
 
     close(sock);
+}
+
+void http_server_not_found(http_server_t* server, http_handler_t handler) {
+    server->handle_not_found = handler;
+}
+
+void http_server_internal_server_error(http_server_t* server, http_handler_t handler) {
+    server->handle_internal_server_error = handler;
 }
 
 void http_server_get(http_server_t* server, const char* path, http_handler_t handler) {

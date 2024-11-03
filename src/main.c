@@ -8,27 +8,25 @@
 #include <string.h>
 #include <stdio.h>
 
-void handle_makefile(http_response_t* response, http_request_t* request) {
+http_result_t handle_makefile(http_response_t* response, http_request_t* request) {
     LOG_INFO("%s %.*s",
             http_method_to_cstr(request->method),
             request->path.length,
             request->path.data);
 
-    http_response_send_file(response, HTTP_STATUS_OK, "./Makefile");
-    return;
+    return http_response_send_file(response, HTTP_STATUS_OK, "./Makefile");
 }
 
-void handle_users(http_response_t* response, http_request_t* request) {
+http_result_t handle_users(http_response_t* response, http_request_t* request) {
     LOG_INFO("%s %.*s",
             http_method_to_cstr(request->method),
             request->path.length,
             request->path.data);
 
-    http_response_send_text(response, HTTP_STATUS_OK, str_from_cstr("hello user"));
-    return;
+    return http_response_send_text(response, HTTP_STATUS_OK, str_from_cstr("hello user"));
 }
 
-void handle_user_id(http_response_t* response, http_request_t* request) {
+http_result_t handle_user_id(http_response_t* response, http_request_t* request) {
     LOG_INFO("%s %.*s",
             http_method_to_cstr(request->method),
             request->path.length,
@@ -36,23 +34,20 @@ void handle_user_id(http_response_t* response, http_request_t* request) {
 
     str_t user_id = request->params[0];
     if (str_is_null_or_empty(user_id)) {
-        http_response_send_text(response, HTTP_STATUS_BAD_REQUEST, str_from_cstr("No user id"));
-        return;
+        return http_response_send_text(response, HTTP_STATUS_BAD_REQUEST, str_from_cstr("No user id"));
     }
     char buffer[2000] = {0};
     sprintf(buffer, "%.*s", (i32)user_id.length, user_id.data);
-    http_response_send_text(response, HTTP_STATUS_OK, str_from_cstr(buffer));
-    return;
+    return http_response_send_text(response, HTTP_STATUS_OK, str_from_cstr(buffer));
 }
 
-void handle_void(http_response_t* response, http_request_t* request) {
+http_result_t handle_void(http_response_t* response, http_request_t* request) {
     LOG_INFO("%s %.*s",
             http_method_to_cstr(request->method),
             request->path.length,
             request->path.data);
 
-    http_response_send_text(response, HTTP_STATUS_OK, str_from_cstr("hello from void"));
-    return;
+    return http_response_send_text(response, HTTP_STATUS_OK, str_from_cstr("hello from void"));
 }
 
 int main() {
