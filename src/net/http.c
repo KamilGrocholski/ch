@@ -5,6 +5,7 @@
 #include "core/str.h"
 #include "core/memory.h"
 #include "core/strhashmap.h"
+#include "core/array.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -16,10 +17,12 @@
 #include <arpa/inet.h>
 
 static http_result_t default_handle_not_found(http_response_t* response, http_request_t* request) {
+    (void)request;
     return http_response_send_no_content(response, HTTP_STATUS_NOT_FOUND);
 }
 
 static http_result_t default_handle_internal_server_error(http_response_t* response, http_request_t* request) {
+    (void)request;
     return http_response_send_no_content(response, HTTP_STATUS_INTERNAL_SERVER_ERROR);
 }
 
@@ -45,16 +48,25 @@ static void handle_client(http_server_t* server, i32 socket) {
     http_response_init(&response);
     response.client_fd = client_fd;
     response.request = &request;
-    http_handler_t handler = http_router_search(&server->router, request.method, request.path, &request.params);
+    http_method_handler_t method_handler = http_router_search(&server->router, request.method, request.path, &request.params);
     http_result_t result;
-    if (!handler) {
+    if (!method_handler.handler) {
+        LOG_DEBUG("handle_client - handle not found");
         if (server->handle_not_found) {
+            LOG_DEBUG("handle_client - cutom not found");
             result = server->handle_not_found(&response, &request);
         } else {
+            LOG_DEBUG("handle_client - default not found");
             result = default_handle_not_found(&response, &request);
         }
     } else {
-        result = handler(&response, &request);
+        result = http_middleware_process_chain(
+            &response, 
+            &request, 
+            method_handler.middleware_containers, 
+            array_length(method_handler.middleware_containers), 
+            method_handler.handler
+        );
     }
     if (!result.ok) {
         LOG_ERROR("handle_client - result is not ok");
@@ -109,14 +121,23 @@ void http_server_internal_server_error(http_server_t* server, http_handler_t han
     server->handle_internal_server_error = handler;
 }
 
-void http_server_get(http_server_t* server, const char* path, http_handler_t handler) {
-    http_router_add(&server->router, HTTP_METHOD_GET, path, handler);
+void http_server_get(http_server_t* server, const char* path, http_handler_t handler, u64 middlewares_count, ...) {
+    va_list args;
+    va_start(args, middlewares_count);
+    http_router_add(&server->router, HTTP_METHOD_GET, path, handler, middlewares_count, args);
+    va_end(args);
 }
 
-void http_server_post(http_server_t* server, const char* path, http_handler_t handler) {
-    http_router_add(&server->router, HTTP_METHOD_POST, path, handler);
+void http_server_post(http_server_t* server, const char* path, http_handler_t handler, u64 middlewares_count, ...) {
+    va_list args;
+    va_start(args, middlewares_count);
+    http_router_add(&server->router, HTTP_METHOD_POST, path, handler, middlewares_count, args);
+    va_end(args);
 }
 
-void http_server_delete(http_server_t* server, const char* path, http_handler_t handler) {
-    http_router_add(&server->router, HTTP_METHOD_DELETE, path, handler);
+void http_server_delete(http_server_t* server, const char* path, http_handler_t handler, u64 middlewares_count, ...) {
+    va_list args;
+    va_start(args, middlewares_count);
+    http_router_add(&server->router, HTTP_METHOD_DELETE, path, handler, middlewares_count, args);
+    va_end(args);
 }

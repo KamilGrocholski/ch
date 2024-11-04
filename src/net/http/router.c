@@ -6,7 +6,10 @@
 #include "core/array.h"
 #include "core/strhashmap.h"
 
-static b8 http_router_add_route(http_router_t* router, http_method_t method, str_t path, http_handler_t handler);
+#include <stdarg.h>
+
+static b8 http_router_add_route(http_router_t* router, http_method_t method, str_t path, http_handler_t handler, 
+    http_middleware_container_t* middleware_containers);
 static http_router_node_t* http_router_match(http_router_t* router, http_method_t method, str_t path, str_t (*out_params)[]);
 
 void http_router_init(http_router_t* router) {
@@ -21,27 +24,46 @@ void http_router_deinit(http_router_t* router) {
     (void)router;
 }
 
-http_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, str_t (*out_params)[]) {
+http_method_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, str_t (*out_params)[]) {
     http_router_node_t* node = http_router_match(router, method, path, out_params);
     if (!node) {
         LOG_DEBUG("http_router_search - handler NOT found for [%s %.*s]", http_method_to_cstr(method), path.length, path.data);
-        return 0;
+        return (http_method_handler_t){0};
     }
-    http_handler_t handler = node->method_handlers[method];
+    http_method_handler_t method_handler = node->method_handlers[method];
     LOG_DEBUG("http_router_search - handler found for [%s %.*s]", http_method_to_cstr(method), path.length, path.data);
-    return handler;
+    return method_handler;
 }
 
-void http_router_add(http_router_t* router, http_method_t method, const char* path, http_handler_t handler) {
+void http_router_add(
+    http_router_t* router, 
+    http_method_t method, 
+    const char* path, 
+    http_handler_t handler, 
+    u64 middlewares_count,
+    va_list middlewares
+) {
     ASSERT(router);
     ASSERT(method >= 0 && method < _HTTP_METHOD_MAX);
     ASSERT(path);
     ASSERT(handler);
-    ASSERT(http_router_add_route(router, method, str_from_cstr(path), handler));
+
+    http_middleware_container_t* middleware_containers = 0;
+    if (middlewares_count) {
+        middleware_containers = array_create(0, http_middleware_container_t);
+        ASSERT(middleware_containers);
+        for (u64 i = 0; i < middlewares_count; i++) {
+            http_middleware_t middleware = va_arg(middlewares, http_middleware_t);
+            ASSERT(middleware);
+            array_append(middleware_containers, (http_middleware_container_t){.middleware = middleware});
+            ASSERT(middleware_containers);
+        }
+    }
+
+    ASSERT(http_router_add_route(router, method, str_from_cstr(path), handler, middleware_containers));
 }
 
 static http_router_node_t* http_router_match(http_router_t* router, http_method_t method, str_t path, str_t (*out_params)[]) {
-
     LOG_DEBUG("http_router_match - matching [%s %.*s]", http_method_to_cstr(method), path.length, path.data);
     
     http_router_node_t* curr = &router->root;
@@ -98,7 +120,7 @@ static http_router_node_t* http_router_match(http_router_t* router, http_method_
         }
     }
 
-    if (curr->method_handlers[method]) {
+    if (curr->method_handlers[method].handler) {
         LOG_DEBUG("http_router_match - handler found for [%s %.*s]", http_method_to_cstr(method), path.length, path.data);
         return curr;
     }
@@ -116,7 +138,7 @@ static http_router_node_t* http_router_node_maybe_create(http_router_node_t* tar
     ASSERT_MSG(node, "http_router_node_maybe_create - failed node memory allocation");
     memory_zero(node, sizeof(http_router_node_t));
     for (u64 i = 0; i < _HTTP_METHOD_MAX; i++) {
-        node->method_handlers[i] = 0;
+        node->method_handlers[i] = (http_method_handler_t){0};
     }
     for (u64 i = 0; i < HTTP_ROUTER_CHILDREN_MAX_CAPACITY; i++) {
         node->children[i] = 0;
@@ -127,9 +149,15 @@ static http_router_node_t* http_router_node_maybe_create(http_router_node_t* tar
     return node;
 }
 
-static b8 http_router_add_route(http_router_t* router, http_method_t method, str_t path, http_handler_t handler) {
+static b8 http_router_add_route(
+    http_router_t* router, 
+    http_method_t method, 
+    str_t path, 
+    http_handler_t handler, 
+    http_middleware_container_t* middleware_containers
+) {
     LOG_DEBUG("http_router_add_route - adding [%s %.*s] -> %p", 
-            http_method_to_cstr(method), path.length, path.data, handler);
+                http_method_to_cstr(method), path.length, path.data, handler);
     http_router_node_t* curr = &router->root;
     curr = http_router_node_maybe_create(curr);
 
@@ -182,12 +210,13 @@ static b8 http_router_add_route(http_router_t* router, http_method_t method, str
 
     ASSERT_MSG(curr, "http_router_add_route - internal non 0 curr node MUST be there");
 
-    if (curr->method_handlers[method] != 0) {
+    if (curr->method_handlers[method].handler != 0) {
         LOG_FATAL("http_router_add_route - trying to overwrite an existing handler with [%s %.*s] -> %p", 
                 http_method_to_cstr(method), path.length, path.data, handler);
     }
 
-    curr->method_handlers[method] = handler;
+    curr->method_handlers[method].handler = handler;
+    curr->method_handlers[method].middleware_containers = middleware_containers;
 
     LOG_DEBUG("http_router_add_route - added [%s %.*s] -> %p", 
             http_method_to_cstr(method), path.length, path.data, handler);

@@ -6,6 +6,8 @@
 #include "core/memory.h"
 #include "core/strhashmap.h"
 
+#include <stdarg.h>
+
 typedef struct http_result_t {
     b8 ok;
 } http_result_t;
@@ -114,15 +116,34 @@ b8 http_request_parse(str_t raw_request, http_request_t* dest);
 // -- request/response end
 
 // -- middleware start
+typedef struct http_middleware_container_t http_middleware_container_t;
+
 typedef http_result_t (*http_middleware_t)(http_response_t* response, http_request_t* request, http_handler_t next);
+
+http_result_t http_middleware_process_chain(
+    http_response_t* response, 
+    http_request_t* request, 
+    http_middleware_container_t* middleware_containers,
+    u64 middleware_count,
+    http_handler_t final_handler
+);
 // -- middleware end
 
 // -- router start
 #define HTTP_ROUTER_CHILDREN_MAX_CAPACITY (127)
 
+typedef struct http_middleware_container_t { 
+    http_middleware_t middleware;
+} http_middleware_container_t;
+
+typedef struct http_method_handler_t {
+    http_handler_t handler;
+    http_middleware_container_t* middleware_containers;
+} http_method_handler_t;
+
 typedef struct http_router_node_t {
     str_t segment; // static | param | wildcard
-    http_handler_t method_handlers[_HTTP_METHOD_MAX];
+    http_method_handler_t method_handlers[_HTTP_METHOD_MAX];
     struct http_router_node_t* children[HTTP_ROUTER_CHILDREN_MAX_CAPACITY];
     b8 is_param; // e.g. ':id'
     b8 is_wildcard; // e.g. '*'
@@ -138,9 +159,16 @@ void http_router_init(http_router_t* router);
 
 void http_router_deinit(http_router_t* router);
 
-http_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, str_t (*out_params)[]);
+http_method_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, str_t (*out_params)[]);
 
-void http_router_add(http_router_t* router, http_method_t method, const char* path, http_handler_t handler);
+void http_router_add(
+    http_router_t* router,
+    http_method_t method, 
+    const char* path, 
+    http_handler_t handler, 
+    u64 middlewares_count,
+    va_list middlewares
+);
 // -- router end
 
 // -- server start
@@ -161,9 +189,9 @@ void http_server_not_found(http_server_t* server, http_handler_t handler);
 
 void http_server_internal_server_error(http_server_t* server, http_handler_t handler);
 
-void http_server_get(http_server_t* server, const char* path, http_handler_t handler);
+void http_server_get(http_server_t* server, const char* path, http_handler_t handler, u64 middlewares_count, ...);
 
-void http_server_post(http_server_t* server, const char* path, http_handler_t handler);
+void http_server_post(http_server_t* server, const char* path, http_handler_t handler, u64 middlewares_count, ...);
 
-void http_server_delete(http_server_t* server, const char* path, http_handler_t handler);
+void http_server_delete(http_server_t* server, const char* path, http_handler_t handler, u64 middlewares_count, ...);
 // -- server end

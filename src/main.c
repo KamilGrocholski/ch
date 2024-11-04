@@ -8,6 +8,15 @@
 #include <string.h>
 #include <stdio.h>
 
+http_result_t middleware_void(http_response_t* response, http_request_t* request, http_handler_t next) {
+    LOG_INFO("middleware_void - starting: %s %.*s",
+            http_method_to_cstr(request->method),
+            request->path.length,
+            request->path.data);
+
+    return next(response, request);
+}
+
 http_result_t handle_makefile(http_response_t* response, http_request_t* request) {
     LOG_INFO("%s %.*s",
             http_method_to_cstr(request->method),
@@ -57,11 +66,11 @@ int main() {
     const u64 request_stack_buffer_size = MEBIBYTES(4);
     http_server_init(&server, request_stack_buffer_size);
 
-    http_server_get(&server, "/makefile", handle_makefile);
-    http_server_get(&server, "/users", handle_users);
-    http_server_get(&server, "/users/:id/void", handle_void);
-    http_server_get(&server, "/users/:id", handle_user_id);
-    http_server_get(&server, "/void", handle_void);
+    http_server_get(&server, "/makefile", handle_makefile, 0);
+    http_server_get(&server, "/users", handle_users, 1, middleware_void);
+    http_server_get(&server, "/users/:id/void", handle_void, 0);
+    http_server_get(&server, "/users/:id", handle_user_id, 0);
+    http_server_get(&server, "/void", handle_void, 0);
 
     const u16 port = 8080;
     http_server_start(&server, port);
