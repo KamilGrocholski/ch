@@ -20,7 +20,7 @@ http_result_t http_middleware_process_chain(
                 return result;
             }
         } else {
-            LOG_ERROR("http_middleware_process_chain - skipping 0 middleware at index: %llu", i);
+            LOG_FATAL("http_middleware_process_chain - skipping 0 middleware at index: %llu", i);
         }
     }
     LOG_DEBUG("http_middleware_process_chain - all middlewares processed successfully");
