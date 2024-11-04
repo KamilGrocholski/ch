@@ -27,6 +27,9 @@
 ├── fs                  # Filesystem utils
 │   ├── fs.c
 │   └── fs.h
+├── env                 # Env utils for loading and parsing .env like files
+│   ├── env.c
+│   └── env.h
 └── net                 # Network utils
     ├── http
     │   ├── method.c
