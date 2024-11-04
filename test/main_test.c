@@ -11,6 +11,7 @@
 #include "./net/http/router_test.h"
 #include "./net/url_test.h"
 #include "./fs/fs_test.h"
+#include "./env/env_test.h"
 
 #include "test_manager.h"
 
@@ -29,6 +30,8 @@ int main() {
     url__register_test();
 
     fs__register_test();
+
+    env__register_test();
 
     LOG_INFO("Starting tests...");
 
