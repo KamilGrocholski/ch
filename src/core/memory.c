@@ -117,6 +117,6 @@ char* memory_stats_to_string(void) {
 
 void memory_report(void) {
     char* report = memory_stats_to_string();
-    printf(report);
+    printf("%s\n", report);
     free(report);
 }
