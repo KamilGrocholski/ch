@@ -2,8 +2,10 @@
 #include "core/logger.h"
 #include "core/defines.h"
 #include "core/memory.h"
+#include "core/assert.h"
 #include "net/http.h"
 #include "fs/fs.h"
+#include "env/env.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -62,6 +64,9 @@ http_result_t handle_void(http_response_t* response, http_request_t* request) {
 int main() {
     memory_init();
 
+    env_t env = {0};
+    ASSERT(env_load(0, ".env", &env));
+
     http_server_t server = {0};
     const u64 request_stack_buffer_size = MEBIBYTES(4);
     http_server_init(&server, request_stack_buffer_size);
@@ -72,8 +77,8 @@ int main() {
     http_server_get(&server, "/users/:id", handle_user_id, 0);
     http_server_get(&server, "/void", handle_void, 0);
 
-    const u16 port = 8080;
-    http_server_start(&server, port);
+    LOG_INFO("Server listening on port %llu", env.PORT);
+    http_server_start(&server, env.PORT);
 
     http_server_deinit(&server);
 
