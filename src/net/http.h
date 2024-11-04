@@ -117,14 +117,15 @@ b8 http_request_parse(str_t raw_request, http_request_t* dest);
 
 // -- middleware start
 typedef struct http_middleware_container_t http_middleware_container_t;
+typedef struct http_server_t http_server_t;
 
 typedef http_result_t (*http_middleware_t)(http_response_t* response, http_request_t* request, http_handler_t next);
 
 http_middleware_container_t* http_middleware_containers_from_v(u64 middleware_count, va_list middlewares);
 
 http_result_t http_middleware_containers_apply_all(
-    http_response_t* response, 
-    http_request_t* request, 
+    http_response_t* response,
+    http_request_t* request,
     http_middleware_container_t* middleware_containers,
     http_handler_t final_handler
 );
@@ -192,9 +193,18 @@ void http_router_use(
 typedef struct http_server_t {
     http_router_t router;
     u32 stack_buffer_size;
+    http_middleware_container_t* middleware_containers;
     http_handler_t handle_not_found;
     http_handler_t handle_internal_server_error;
 } http_server_t;
+
+http_result_t http_server_process_request(
+    http_server_t* server, 
+    http_response_t* response,
+    http_request_t* request,
+    http_middleware_container_t* middleware_containers,
+    http_handler_t final_handler
+);
 
 void http_server_init(http_server_t* server, u32 stack_buffer_size);
 
@@ -205,6 +215,8 @@ void http_server_start(http_server_t* server, u16 port);
 void http_server_not_found(http_server_t* server, http_handler_t handler);
 
 void http_server_internal_server_error(http_server_t* server, http_handler_t handler);
+
+void http_server_use(http_server_t* server, u64 middlewares_count, ...);
 
 void http_server_get(http_server_t* server, const char* path, http_handler_t handler, u64 middlewares_count, ...);
 

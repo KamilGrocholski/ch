@@ -10,6 +10,12 @@
 #include <string.h>
 #include <stdio.h>
 
+http_result_t middleware_after_void(http_response_t* response, http_request_t* request, http_handler_t next) {
+    LOG_INFO("middleware_after_void - starting: %s %.*s",
+            http_method_to_cstr(request->method),
+            request->path.length,
+            request->path.data);
+
 http_result_t middleware_void(http_response_t* response, http_request_t* request, http_handler_t next) {
     LOG_INFO("middleware_void - starting: %s %.*s",
             http_method_to_cstr(request->method),
@@ -72,7 +78,7 @@ int main() {
     http_server_init(&server, request_stack_buffer_size);
 
     http_server_get(&server, "/makefile", handle_makefile, 0);
-    http_server_get(&server, "/users", handle_users, 1, middleware_void);
+    http_server_get(&server, "/users", handle_users, 2, middleware_void, middleware_after_void);
     http_server_get(&server, "/users/:id/void", handle_void, 0);
     http_server_get(&server, "/users/:id", handle_user_id, 0);
     http_server_get(&server, "/void", handle_void, 0);

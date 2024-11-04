@@ -10,6 +10,10 @@ http_result_t http_middleware_containers_apply_all(
     http_middleware_container_t* middleware_containers,
     http_handler_t final_handler
 ) {
+    if (!middleware_containers) {
+        LOG_DEBUG("http_middleware_containers_apply_all - no middlewares to apply");
+        return (http_result_t){.ok = true};
+    }
     LOG_DEBUG("http_middleware_containers_apply_all - starting to apply: %llu middlewares", array_length(middleware_containers));
     for (u64 i = 0; i < array_length(middleware_containers); i++) {
         http_middleware_t current_middleware = middleware_containers[i].middleware;

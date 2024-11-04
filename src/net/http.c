@@ -7,6 +7,7 @@
 #include "core/strhashmap.h"
 #include "core/array.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -60,10 +61,11 @@ static void handle_client(http_server_t* server, i32 socket) {
             result = default_handle_not_found(&response, &request);
         }
     } else {
-        result = http_process_all(
+        result = http_server_process_request(
+            server,
             &response, 
             &request, 
-            method_handler.middleware_containers, 
+            method_handler.middleware_containers,
             method_handler.handler
         );
     }
@@ -120,6 +122,22 @@ void http_server_internal_server_error(http_server_t* server, http_handler_t han
     server->handle_internal_server_error = handler;
 }
 
+void http_server_use(http_server_t* server, u64 middlewares_count, ...) {
+    if (!middlewares_count) {
+        return;
+    }
+    if (!server->middleware_containers) {
+        server->middleware_containers = array_create(0, http_middleware_container_t);
+        ASSERT(server->middleware_containers);
+    }
+    va_list args;
+    va_start(args, middlewares_count);
+    http_middleware_t middleware = va_arg(args, http_middleware_t);
+    array_append(server->middleware_containers, (http_middleware_container_t){.middleware = middleware});
+    ASSERT(server->middleware_containers);
+    va_end(args);
+}
+
 void http_server_get(http_server_t* server, const char* path, http_handler_t handler, u64 middlewares_count, ...) {
     va_list args;
     va_start(args, middlewares_count);
@@ -141,17 +159,20 @@ void http_server_delete(http_server_t* server, const char* path, http_handler_t 
     va_end(args);
 }
 
-http_result_t http_process_all(
+http_result_t http_server_process_request(
+    http_server_t* server, 
     http_response_t* response,
     http_request_t* request,
     http_middleware_container_t* middleware_containers,
     http_handler_t final_handler
 ) {
-    http_result_t result = http_middleware_containers_apply_all(response, request, middleware_containers, final_handler);
+    http_result_t result = http_middleware_containers_apply_all(response, request, server->middleware_containers, final_handler);
     if (!result.ok) {
-        LOG_DEBUG("http_process_all - not all middlewares were processed successfully");
         return result;
     }
-    LOG_DEBUG("http_process_all - all middlewares processed successfully");
+    result = http_middleware_containers_apply_all(response, request, middleware_containers, final_handler);
+    if (!result.ok) {
+        return result;
+    }
     return final_handler(response, request);
 }
