@@ -1,6 +1,23 @@
 #include "net/http.h"
 
 #include "core/logger.h"
+#include "core/array.h"
+#include "core/assert.h"
+
+http_middleware_container_t* http_middleware_containers_from_v(u64 middleware_count, va_list middlewares) {
+    http_middleware_container_t* middleware_containers = 0;
+    if (middleware_count) {
+        middleware_containers = array_create(0, http_middleware_container_t);
+        ASSERT(middleware_containers);
+        for (u64 i = 0; i < middleware_count; i++) {
+            http_middleware_t middleware = va_arg(middlewares, http_middleware_t);
+            ASSERT(middleware);
+            array_append(middleware_containers, (http_middleware_container_t){.middleware = middleware});
+            ASSERT(middleware_containers);
+        }
+    }
+    return middleware_containers;
+}
 
 http_result_t http_middleware_process_chain(
     http_response_t* response,

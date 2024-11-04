@@ -48,17 +48,7 @@ void http_router_add(
     ASSERT(path);
     ASSERT(handler);
 
-    http_middleware_container_t* middleware_containers = 0;
-    if (middlewares_count) {
-        middleware_containers = array_create(0, http_middleware_container_t);
-        ASSERT(middleware_containers);
-        for (u64 i = 0; i < middlewares_count; i++) {
-            http_middleware_t middleware = va_arg(middlewares, http_middleware_t);
-            ASSERT(middleware);
-            array_append(middleware_containers, (http_middleware_container_t){.middleware = middleware});
-            ASSERT(middleware_containers);
-        }
-    }
+    http_middleware_container_t* middleware_containers = http_middleware_containers_from_v(middlewares_count, middlewares);
 
     ASSERT(http_router_add_route(router, method, str_from_cstr(path), handler, middleware_containers));
 }

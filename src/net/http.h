@@ -120,6 +120,8 @@ typedef struct http_middleware_container_t http_middleware_container_t;
 
 typedef http_result_t (*http_middleware_t)(http_response_t* response, http_request_t* request, http_handler_t next);
 
+http_middleware_container_t* http_middleware_containers_from_v(u64 middleware_count, va_list middlewares);
+
 http_result_t http_middleware_process_chain(
     http_response_t* response, 
     http_request_t* request, 
@@ -162,6 +164,15 @@ void http_router_deinit(http_router_t* router);
 http_method_handler_t http_router_search(http_router_t* router, http_method_t method, str_t path, str_t (*out_params)[]);
 
 void http_router_add(
+    http_router_t* router,
+    http_method_t method, 
+    const char* path, 
+    http_handler_t handler, 
+    u64 middlewares_count,
+    va_list middlewares
+);
+
+void http_router_use(
     http_router_t* router,
     http_method_t method, 
     const char* path, 
