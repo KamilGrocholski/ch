@@ -16,7 +16,7 @@ http_result_t http_middleware_process_chain(
             LOG_DEBUG("http_middleware_process_chain - calling middleware at index: %llu", i);
             http_result_t result = current_middleware(response, request, final_handler);
             if (!result.ok) {
-                LOG_DEBUG("Middleware at index %llu stopped the chain.", i);
+                LOG_DEBUG("http_middleware_process_chain - middleware at index %llu stopped the chain", i);
                 return result;
             }
         } else {
