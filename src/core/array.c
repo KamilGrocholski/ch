@@ -42,7 +42,7 @@ void* array_maybe_resize(void* array, u64 min_capacity) {
 void* _array_allocate(u64 stride, u64 capacity, allocator_t* allocator) {
     array_header_t* header = 0;
     u64 size = sizeof(array_header_t) + stride * capacity;
-    if (allocator && header) {
+    if (allocator) {
         header = allocator->allocate(allocator->context, size);
     } else {
         header = memory_allocate(size, MEMORY_TAG_ARRAY);
