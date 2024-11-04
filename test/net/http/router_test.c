@@ -79,12 +79,13 @@ u8 http_router__should_register_route_and_find_handler(void) {
     request.proto = str_from_cstr("HTTP1.1");
     request.body = str_from_cstr("body");
     expect_str_eq_cstr(request.params[0], "234");
-    http_result_t result = http_process_all(
+    http_result_t result = http_middleware_containers_apply_all(
         &response, 
         &request, 
         method_handler.middleware_containers, 
         method_handler.handler
     );
+    result = method_handler.handler(&response, &request);
     expect_true(result.ok);
 
     http_router_deinit(&router);
