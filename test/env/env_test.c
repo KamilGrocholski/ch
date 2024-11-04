@@ -8,7 +8,7 @@
 u8 env__should_parse_env_file(void) {
     strhashmap_t envs = {0};
     strhashmap_init(0, &envs);
-    b8 ok = env_parse_file(0, "./test/env/.env", &envs);
+    b8 ok = env_parse_file(0, "./test/env/test_env", &envs);
     expect_true(ok);
 
     str_t got;
