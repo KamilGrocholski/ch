@@ -60,11 +60,10 @@ static void handle_client(http_server_t* server, i32 socket) {
             result = default_handle_not_found(&response, &request);
         }
     } else {
-        result = http_middleware_process_chain(
+        result = http_process_all(
             &response, 
             &request, 
             method_handler.middleware_containers, 
-            array_length(method_handler.middleware_containers), 
             method_handler.handler
         );
     }
@@ -140,4 +139,19 @@ void http_server_delete(http_server_t* server, const char* path, http_handler_t 
     va_start(args, middlewares_count);
     http_router_add(&server->router, HTTP_METHOD_DELETE, path, handler, middlewares_count, args);
     va_end(args);
+}
+
+http_result_t http_process_all(
+    http_response_t* response,
+    http_request_t* request,
+    http_middleware_container_t* middleware_containers,
+    http_handler_t final_handler
+) {
+    http_result_t result = http_middleware_containers_apply_all(response, request, middleware_containers, final_handler);
+    if (!result.ok) {
+        LOG_DEBUG("http_process_all - not all middlewares were processed successfully");
+        return result;
+    }
+    LOG_DEBUG("http_process_all - all middlewares processed successfully");
+    return final_handler(response, request);
 }

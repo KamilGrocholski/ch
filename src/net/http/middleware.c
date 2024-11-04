@@ -4,6 +4,29 @@
 #include "core/array.h"
 #include "core/assert.h"
 
+http_result_t http_middleware_containers_apply_all(
+    http_response_t* response, 
+    http_request_t* request, 
+    http_middleware_container_t* middleware_containers,
+    http_handler_t final_handler
+) {
+    LOG_DEBUG("http_middleware_containers_apply_all - starting to apply: %llu middlewares", array_length(middleware_containers));
+    for (u64 i = 0; i < array_length(middleware_containers); i++) {
+        http_middleware_t current_middleware = middleware_containers[i].middleware;
+        if (current_middleware) {
+            LOG_DEBUG("http_middleware_containers_apply_all - calling middleware at index: %llu", i);
+            http_result_t result = current_middleware(response, request, final_handler);
+            if (!result.ok) {
+                LOG_DEBUG("http_middleware_containers_apply_all - middleware at index %llu stopped the chain", i);
+                return result;
+            }
+        } else {
+            LOG_FATAL("http_middleware_containers_apply_all - 0 middleware at index: %llu", i);
+        }
+    }
+    return (http_result_t){.ok = true};
+}
+
 http_middleware_container_t* http_middleware_containers_from_v(u64 middleware_count, va_list middlewares) {
     http_middleware_container_t* middleware_containers = 0;
     if (middleware_count) {
@@ -17,29 +40,4 @@ http_middleware_container_t* http_middleware_containers_from_v(u64 middleware_co
         }
     }
     return middleware_containers;
-}
-
-http_result_t http_middleware_process_chain(
-    http_response_t* response,
-    http_request_t* request,
-    http_middleware_container_t* middleware_containers,
-    u64 middleware_count,
-    http_handler_t final_handler
-) {
-    LOG_DEBUG("http_middleware_process_chain - starting with count: %llu", middleware_count);
-    for (u64 i = 0; i < middleware_count; i++) {
-        http_middleware_t current_middleware = middleware_containers[i].middleware;
-        if (current_middleware) {
-            LOG_DEBUG("http_middleware_process_chain - calling middleware at index: %llu", i);
-            http_result_t result = current_middleware(response, request, final_handler);
-            if (!result.ok) {
-                LOG_DEBUG("http_middleware_process_chain - middleware at index %llu stopped the chain", i);
-                return result;
-            }
-        } else {
-            LOG_FATAL("http_middleware_process_chain - skipping 0 middleware at index: %llu", i);
-        }
-    }
-    LOG_DEBUG("http_middleware_process_chain - all middlewares processed successfully");
-    return final_handler(response, request);
 }

@@ -122,11 +122,17 @@ typedef http_result_t (*http_middleware_t)(http_response_t* response, http_reque
 
 http_middleware_container_t* http_middleware_containers_from_v(u64 middleware_count, va_list middlewares);
 
-http_result_t http_middleware_process_chain(
+http_result_t http_middleware_containers_apply_all(
     http_response_t* response, 
     http_request_t* request, 
     http_middleware_container_t* middleware_containers,
-    u64 middleware_count,
+    http_handler_t final_handler
+);
+
+http_result_t http_process_all(
+    http_response_t* response, 
+    http_request_t* request, 
+    http_middleware_container_t* middleware_containers,
     http_handler_t final_handler
 );
 // -- middleware end
