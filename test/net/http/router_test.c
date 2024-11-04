@@ -26,6 +26,11 @@ static void add_testing_route(
     va_end(args);
 }
 
+http_result_t middleware_after_void(http_response_t* response, http_request_t* request, http_handler_t next) {
+    LOG_DEBUG("middleware after void");
+    return next(response, request);
+}
+
 http_result_t middleware_void(http_response_t* response, http_request_t* request, http_handler_t next) {
     LOG_DEBUG("middleware void");
     return next(response, request);
@@ -55,7 +60,7 @@ u8 http_router__should_register_route_and_find_handler(void) {
 
     add_testing_route(&router, HTTP_METHOD_GET, "/users/:id/n/:age", handle_user_id_okej, 0);
     add_testing_route(&router, HTTP_METHOD_GET, "/users/:id", handle_user_id, 0);
-    add_testing_route(&router, HTTP_METHOD_GET, "/users/:id/friends", handle_user_id_friends, 1, middleware_void);
+    add_testing_route(&router, HTTP_METHOD_GET, "/users/:id/friends", handle_user_id_friends, 2, middleware_void, middleware_after_void);
     add_testing_route(&router, HTTP_METHOD_GET, "/users/:id/okej", handle_user_id_okej, 0);
     add_testing_route(&router, HTTP_METHOD_GET, "/users/:id/:age", handle_user_id_okej, 0);
     add_testing_route(&router, HTTP_METHOD_GET, "/void/:id", handle_user_id_okej, 0);
@@ -74,11 +79,10 @@ u8 http_router__should_register_route_and_find_handler(void) {
     request.proto = str_from_cstr("HTTP1.1");
     request.body = str_from_cstr("body");
     expect_str_eq_cstr(request.params[0], "234");
-    http_result_t result = http_middleware_process_chain(
+    http_result_t result = http_process_all(
         &response, 
         &request, 
         method_handler.middleware_containers, 
-        array_length(method_handler.middleware_containers), 
         method_handler.handler
     );
     expect_true(result.ok);
