@@ -46,7 +46,9 @@
 
 ## How to setup
 
-Go to `src/main.c` and add routes
+- Create .env file based on .env.example
+
+- Go to `src/main.c` and add routes
 
 ## To start
 ```bash
