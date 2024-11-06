@@ -27,6 +27,12 @@ str_t str_pop_first_split(str_t* str, str_t split_by);
 
 str_t str_pop_first_split_char(str_t* str, char split_by);
 
+str_t str_trim_whitespace(str_t str);
+
+str_t str_trim_whitespace_left(str_t str);
+
+str_t str_trim_whitespace_right(str_t str);
+
 i32 str_index(str_t str, str_t substr);
 
 i32 str_index_char(str_t str, char ch);

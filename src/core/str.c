@@ -74,6 +74,35 @@ str_t str_pop_first_split_char(str_t* str, char split_by) {
     return out;
 }
 
+str_t str_trim_whitespace(str_t str) {
+    return str_trim_whitespace_left(str_trim_whitespace_right(str));
+}
+
+str_t str_trim_whitespace_left(str_t str) {
+    if (str_is_null_or_empty(str)) {
+        return str;
+    }
+    u64 i = 0;
+    while(i < str.length && isspace(str.data[i])) {
+        i++;
+    }
+    str.data += i;
+    str.length -= i;
+    return str;
+}
+
+str_t str_trim_whitespace_right(str_t str) {
+    if (str_is_null_or_empty(str)) {
+        return str;
+    }
+    char* end = str.data + str.length - 1;
+    while (end >= str.data && isspace(*end)) {
+        end--;
+    }
+    str.length = end - str.data + 1;
+    return str;
+}
+
 i32 str_index(str_t str, str_t substr) {
     if (str.length < substr.length) {
         return -1;
