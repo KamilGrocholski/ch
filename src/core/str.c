@@ -4,7 +4,7 @@
 #include "core/logger.h"
 
 #include <string.h>
-#include <math.h>
+#include <ctype.h>
 
 str_t str_from_parts(const char* data, u64 length) {
     return (str_t){
@@ -95,7 +95,7 @@ str_t str_trim_whitespace_right(str_t str) {
     if (str_is_null_or_empty(str)) {
         return str;
     }
-    char* end = str.data + str.length - 1;
+    char* end = (char*)(str.data + str.length - 1);
     while (end >= str.data && isspace(*end)) {
         end--;
     }
@@ -229,23 +229,13 @@ u32 str_count_char(str_t str, char ch) {
 }
 
 b8 str_to_u64(str_t str, u64* dest) {
-    char c0 = str.data[0];
     u64 value = 0;
-    if (c0 >= '1' && c0 <= '9') {
-        value = (c0 - 48) * pow(10, str.length - 1);
-    } else {
-        return false;
-    }
-    for (u64 i = 1; i < str.length; i++) {
-        char c = str.data[str.length - i];
-        if (c >= '0' && c <= '9') {
-            if (i >= NUM_64_MAX_DIGITS) {
-                return false;
-            }
-            value += pow(10, i - 1) * (c - 48);
-        } else {
+    for (u64 i = 0; i < str.length; i++) {
+        char c = str.data[i];
+        if (c < '0' || c > '9') {
             return false;
         }
+        value = value * 10 + (c - '0');
     }
     *dest = value;
     return true;
