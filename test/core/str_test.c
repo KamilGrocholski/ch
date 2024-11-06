@@ -220,6 +220,13 @@ u8 str__should_compare_n(void) {
     return true;
 }
 
+u8 str__should_trim_whitespace(void) {
+    str_t a = str_from_cstr("\n\t\r\v a bc d    \t\r\v\n");
+    str_t b = str_trim_whitespace(a);
+    expect_str_eq_cstr(b, "a bc d");
+    return true;
+}
+
 void str__register_test(void) {
     test_manager_register(str__should_create_from_cstr, "Str should create from cstr");
     test_manager_register(str__should_be_empty, "Str should be empty");
@@ -245,4 +252,5 @@ void str__register_test(void) {
     test_manager_register(str__should_pop_first_split, "Str should pop first split");
     test_manager_register(str__should_compare_n, "Str should compare n");
     test_manager_register(str__should_convert_to_u64, "Str should convert to u64");
+    test_manager_register(str__should_trim_whitespace, "Str should trim whitespace");
 }
