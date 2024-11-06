@@ -12,6 +12,7 @@
 #include "./net/url_test.h"
 #include "./fs/fs_test.h"
 #include "./env/env_test.h"
+#include "./unicode/unicode_test.h"
 
 #include "test_manager.h"
 
@@ -32,6 +33,8 @@ int main() {
     fs__register_test();
 
     env__register_test();
+
+    unicode__register_test();
 
     LOG_INFO("Starting tests...");
 
