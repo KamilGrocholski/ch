@@ -3,7 +3,7 @@
 #include <core/defines.h>
 #include <core/arena.h>
 #include <core/str.h>
-#include <net/mime.h>
+#include <net/http.h>
 
 #include "../expect.h"
 #include "../test_manager.h"
