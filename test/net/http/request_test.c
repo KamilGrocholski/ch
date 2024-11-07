@@ -24,7 +24,7 @@ u8 http_request__should_be_parsed(void) {
     string_t raw_request = string_create(0, "");
     raw_request = string_append_format(raw_request, "%s %s %s\n", method, path, proto);
     raw_request = string_append_format(raw_request, "%s: %s\n", header_accept_key, header_accept_value);
-    raw_request = string_append_format(raw_request, "%s: %s\r", header_host_key, header_host_value);
+    raw_request = string_append_format(raw_request, "%s: %s\n", header_host_key, header_host_value);
     raw_request = string_append_format(raw_request, "\n%s", body);
     b8 ok = http_request_parse(string_to_str(raw_request), &request);
     expect_eq(true, ok);
