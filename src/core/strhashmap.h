@@ -3,6 +3,7 @@
 #include "core/defines.h"
 #include "core/memory.h"
 #include "core/str.h"
+#include "core/string.h"
 
 #define STRHASHMAP_MIN_CAPACITY (32)
 #define STRHASHMAP_GROW_FACTOR (2)
@@ -30,3 +31,5 @@ b8 strhashmap_set(strhashmap_t* strhashmap, str_t key, str_t value);
 b8 strhashmap_get(strhashmap_t* strhashmap, str_t key, str_t* value);
 
 b8 strhashmap_remove(strhashmap_t* strhashmap, str_t key);
+
+string_t strhashmap_to_string(allocator_t* allocator, strhashmap_t* strhashmap, const char* kv_format);

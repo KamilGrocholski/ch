@@ -185,3 +185,22 @@ void strhashmap_deinit(strhashmap_t* strhashmap) {
     strhashmap->length = 0;
     strhashmap->capacity = 0;
 }
+
+string_t strhashmap_to_string(allocator_t* allocator, strhashmap_t* strhashmap, const char* kv_format) {
+    if (!kv_format) {
+        kv_format = "[%.*s]: '%.*s'";
+    }
+    string_t string = string_from_parts(allocator, 0, strhashmap->length * 32);
+    if (strhashmap->length == 0) {
+        return string;
+    }
+    u64 i = 0;
+    strhashmap_entry_t* curr = 0;
+    do {
+        curr = &(strhashmap->table[i++]);
+        if (curr->is_occupied && string) {
+            string = string_append_format(string, kv_format, curr->key.length, curr->key.data, curr->value.length, curr->value.data);
+        }
+    } while(i < strhashmap->capacity);
+    return string;
+}
