@@ -52,7 +52,22 @@ http_result_t handle_users(http_response_t* response, http_request_t* request) {
             request->path.length,
             request->path.data);
 
-    return http_response_send_text(response, HTTP_STATUS_OK, str_from_cstr("hello user"));
+    str_t cookies_list = {0};
+    if (!http_request_headers_get(request, str_from_cstr("Cookie"), &cookies_list)) {
+        LOG_ERROR("could not get Cookie header");
+        return http_response_send_no_content(response, HTTP_STATUS_BAD_REQUEST);
+    }
+    cookies_t cookies = {0};
+    cookies_init(&cookies);
+    if (!cookies_parse_cookie_request_list(cookies_list, &cookies)) {
+        LOG_ERROR("could not parse cookie list");
+        return http_response_send_no_content(response, HTTP_STATUS_BAD_REQUEST);
+    }
+    string_t cookies_string = cookies_to_string(0, &cookies);
+    LOG_INFO("cookies_string: '%s'", cookies_string);
+    http_result_t result = http_response_send_text(response, HTTP_STATUS_OK, string_to_str(cookies_string));
+    string_destroy(cookies_string);
+    return result;
 }
 
 http_result_t handle_user_id(http_response_t* response, http_request_t* request) {
