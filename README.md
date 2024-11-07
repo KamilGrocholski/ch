@@ -30,10 +30,6 @@
 ├── env                 # Env utils for loading and parsing .env like files
 │   ├── env.c
 │   └── env.h
-│   ├── http.c
-│   ├── http.h
-│   ├── url.c
-│   └── url.h
 ├── unicode
 │   ├── unicode.c
 │   └── unicode.h
