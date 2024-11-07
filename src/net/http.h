@@ -5,6 +5,7 @@
 #include "core/string.h"
 #include "core/memory.h"
 #include "core/strhashmap.h"
+#include "core/hashmap.h"
 
 #include <stdarg.h>
 
@@ -248,3 +249,49 @@ b8 mime_to_str(mime_t mime, str_t* dest);
 
 b8 mime_from_str(str_t str, mime_t* dest);
 // -- mime end
+
+// -- cookie start
+typedef enum cookie_same_site_t {
+    COOKIE_SAME_SITE_DEFAULT_MODE = 1,
+    COOKIE_SAME_SITE_LAX_MODE,
+    COOKIE_SAME_SITE_STRICT_MODE,
+    COOKIE_SAME_SITE_NONE_MODE,
+} cookie_same_site_t;
+
+typedef struct cookie_t {
+    str_t name;
+    str_t value;
+
+    str_t path;
+    str_t domain;
+    // TODO: add expires time_t;
+    str_t raw_expires;
+
+    // 0 means no 'Max-Age' attribute specified.
+    // <0 means delete cookie now, equivalently 'Max-Age: 0'
+    // >0 means Max-Age attribute present and given in seconds
+    i32 max_age;
+    b8 secure;
+    b8 http_only;
+    cookie_same_site_t same_site;
+    str_t raw;
+} cookie_t;
+
+typedef struct cookies_t {
+    strhashmap_t strhashmap;
+} cookies_t;
+
+b8 cookies_parse_cookie_request_list(str_t list, cookies_t* cookies);
+
+void cookies_init(cookies_t* cookies);
+
+void cookies_deinit(cookies_t* cookies);
+
+b8 cookies_get(cookies_t* cookies, str_t key, str_t* out_value);
+
+b8 cookies_set(cookies_t* cookies, str_t key, str_t value);
+
+b8 cookies_delete(cookies_t* cookies, str_t key);
+
+string_t cookies_to_string(allocator_t* allocator, cookies_t* cookies);
+// -- cookie end
