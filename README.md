@@ -30,10 +30,19 @@
 ├── env                 # Env utils for loading and parsing .env like files
 │   ├── env.c
 │   └── env.h
+│   ├── http.c
+│   ├── http.h
+│   ├── url.c
+│   └── url.h
+├── unicode
+│   ├── unicode.c
+│   └── unicode.h
 └── net                 # Network utils
     ├── http
+    │   ├── cookie.c
     │   ├── method.c
     │   ├── middleware.c
+    │   ├── mime.c
     │   ├── request.c
     │   ├── response.c
     │   ├── router.c
