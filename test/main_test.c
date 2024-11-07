@@ -8,6 +8,7 @@
 #include "./core/str_test.h"
 #include "./net/http/request_test.h"
 #include "./net/http/router_test.h"
+#include "./net/http/cookie_test.h"
 #include "./net/url_test.h"
 #include "./net/mime_test.h"
 #include "./fs/fs_test.h"
@@ -30,6 +31,7 @@ int main() {
     http_router__register_test();
     url__register_test();
     mime__register_test();
+    http_cookie__register_test();
 
     fs__register_test();
 
