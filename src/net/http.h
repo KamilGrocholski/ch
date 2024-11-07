@@ -113,6 +113,8 @@ void http_request_deinit(http_request_t* request);
 
 string_t http_request_to_string(allocator_t* allocator, http_request_t* request);
 
+b8 http_request_headers_get(http_request_t* request, str_t key, str_t* out_value);
+
 b8 http_request_parse(str_t raw_request, http_request_t* dest);
 // -- request/response end
 

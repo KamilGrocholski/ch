@@ -7,7 +7,6 @@
 #include "core/string.h"
 
 void http_request_init(allocator_t* allocator, http_request_t* dest) {
-    *dest = (http_request_t){0};
     strhashmap_init(allocator, &dest->headers);
 }
 
@@ -17,7 +16,6 @@ void http_request_deinit(http_request_t* request) {
         return;
     }
     strhashmap_deinit(&request->headers);
-    *request = (http_request_t){0};
 }
 
 string_t http_request_to_string(allocator_t* allocator, http_request_t* request) {
@@ -32,8 +30,14 @@ string_t http_request_to_string(allocator_t* allocator, http_request_t* request)
     return string;
 }
 
+b8 http_request_headers_get(http_request_t* request, str_t key, str_t* out_value) {
+    return strhashmap_get(&request->headers, key, out_value);
+}
+
 b8 http_request_parse(str_t raw_request, http_request_t* out_request) {
     ASSERT_MSG(out_request, "http_request_parse - out_request MUST not be 0.");
+
+    LOG_DEBUG("http_request_parse - raw_request:\n%.*s", raw_request.length, raw_request.data);
 
     b8 is_raw_request_null = str_is_null(raw_request);
     if (is_raw_request_null) {
@@ -47,7 +51,7 @@ b8 http_request_parse(str_t raw_request, http_request_t* out_request) {
     }
 
     // Split headers and body
-    str_t headers = str_pop_first_split(&raw_request, str_from_cstr("\r\n"));
+    str_t headers = str_pop_first_split(&raw_request, str_from_cstr("\n\n"));
     str_t body = raw_request;
     out_request->body = body;
 
@@ -68,12 +72,11 @@ b8 http_request_parse(str_t raw_request, http_request_t* out_request) {
     out_request->proto = proto;
 
     // Split key value pairs
-    header_line = str_pop_first_split_char(&headers, '\n');
-    str_t key;
-    str_t value;
-    while (!str_is_empty(header_line)) {
-        key = str_pop_first_split(&header_line, str_from_cstr(": "));
-        value = header_line;
+    while (!str_is_empty(headers)) {
+        header_line = str_pop_first_split_char(&headers, '\n');
+        LOG_DEBUG("http_request_parse - header line: %.*s", header_line.length, header_line.data);
+        str_t key = str_pop_first_split(&header_line, str_from_cstr(": "));
+        str_t value = header_line;
 
         if (str_is_null_or_empty(key)) {
             LOG_DEBUG("http_request_parse - null or empty key");
@@ -83,7 +86,7 @@ b8 http_request_parse(str_t raw_request, http_request_t* out_request) {
             LOG_DEBUG("http_request_parse - could not set header");
             return false;
         }
-        header_line = str_pop_first_split_char(&headers, '\n');
+        LOG_DEBUG("http_request_parse - header kv: [%.*s]: '%.*s'", key.length, key.data, value.length, value.data);
     }
 
     return true;
