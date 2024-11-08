@@ -51,6 +51,10 @@ b8 str_compare(str_t a, str_t b);
 
 b8 str_compare_n(str_t a, str_t b, u64 n);
 
+b8 str_compare_ci(str_t a, str_t b);
+
+b8 str_compare_n_ci(str_t a, str_t b, u64 n);
+
 b8 str_compare_char(str_t a, char ch, u64 index);
 
 b8 str_contains(str_t str, str_t substr);

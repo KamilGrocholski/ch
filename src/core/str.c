@@ -178,6 +178,28 @@ b8 str_compare_n(str_t a, str_t b, u64 n) {
     return true;
 }
 
+b8 str_compare_ci(str_t a, str_t b) {
+    if (a.length != b.length) {
+        return false;
+    }
+    for (u64 i = 0; i < a.length; i++) {
+        if (tolower(a.data[i]) != tolower(b.data[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+b8 str_compare_n_ci(str_t a, str_t b, u64 n) {
+    u64 length = MIN(MAX(a.length, b.length), n);
+    for (u64 i = 0; i < length; i++) {
+        if (tolower(a.data[i]) != tolower(b.data[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
 b8 str_compare_char(str_t a, char ch, u64 index) {
     return a.length > index && a.data[index] == ch;
 }
