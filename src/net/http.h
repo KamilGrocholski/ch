@@ -52,6 +52,8 @@ void cookies_deinit(cookies_t* cookies);
 
 b8 cookies_get(cookies_t* cookies, str_t key, str_t* out_value);
 
+b8 cookies_get_ci(cookies_t* cookies, str_t key, str_t* out_value);
+
 b8 cookies_set(cookies_t* cookies, str_t key, str_t value);
 
 b8 cookies_delete(cookies_t* cookies, str_t key);

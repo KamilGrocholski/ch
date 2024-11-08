@@ -43,8 +43,8 @@ u8 strhashmap__should_set_and_get_ci(void) {
     b8 ok = strhashmap_set(&hashmap, key, value);
     expect_eq(true, ok);
     str_t got;
-    ok = strhashmap_get(&hashmap, key_uppercase, &got);
-    expect_eq(true, ok);
+    ok = strhashmap_get_ci(&hashmap, key_uppercase, &got);
+    expect_true(ok);
     expect_str_eq_cstr(got, "nie");
 
     str_t key2 = str_from_cstr("tak2");
@@ -61,5 +61,6 @@ u8 strhashmap__should_set_and_get_ci(void) {
 }
 
 void strhashmap__register_test(void) {
-    test_manager_register(strhashmap__should_set_and_get, "Strhashmap should create and destroy");
+    test_manager_register(strhashmap__should_set_and_get, "Strhashmap should set and get");
+    test_manager_register(strhashmap__should_set_and_get_ci, "Strhashmap should set and get ci");
 }

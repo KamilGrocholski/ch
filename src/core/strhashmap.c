@@ -3,11 +3,12 @@
 #include "core/logger.h"
 #include "core/assert.h"
 #include "core/defines.h"
+#include <ctype.h>
 
 static u64 _hash(str_t key, u64 capacity) {
     u64 hash = 0;
     for (u64 i = 0; i < key.length; i++) {
-        hash = (hash * 31) + key.data[i];
+        hash = (hash * 31) + tolower(key.data[i]);
     }
     return hash % capacity;
 }

@@ -93,7 +93,7 @@ b8 http_request_parse(str_t raw_request, http_request_t* out_request) {
     }
 
     str_t cookies_list = STR_NULL;
-    if (http_request_headers_get(out_request, str_from_cstr("cookie"), &cookies_list)) {
+    if (http_request_headers_get(out_request, str_from_cstr("Cookie"), &cookies_list)) {
         if (!cookies_parse_cookie_request_list(cookies_list, &out_request->cookies)) {
             LOG_DEBUG("http_request_parse - could not parse cookie request list");
             return false;

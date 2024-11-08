@@ -37,11 +37,11 @@ u8 http_request__should_be_parsed(void) {
     expect_str_eq_cstr(request.proto, proto);
     expect_str_eq_cstr(request.body, body);
     str_t got;
-    ok = strhashmap_get(&request.headers, str_from_cstr(header_accept_key), &got);
-    expect_eq(true, ok);
+    ok = strhashmap_get_ci(&request.headers, str_from_cstr(header_accept_key), &got);
+    expect_true(ok);
     expect_str_eq_cstr(got, header_accept_value);
-    ok = strhashmap_get(&request.headers, str_from_cstr(header_host_key), &got);
-    expect_eq(true, ok);
+    ok = strhashmap_get_ci(&request.headers, str_from_cstr(header_host_key), &got);
+    expect_true(true);
     expect_str_eq_cstr(got, header_host_value);
     ok = cookies_get(&request.cookies, str_from_cstr("theme"), &got);
     expect_true(ok);

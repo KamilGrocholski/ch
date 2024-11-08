@@ -231,6 +231,7 @@ u8 str__should_compare_ci(void) {
     str_t a = str_from_cstr("str");
     str_t b = str_from_cstr("StR");
     expect_true(str_compare_ci(a, b));
+    expect_false(str_compare_ci(a, str_from_cstr("StRr")));
     return true;
 }
 

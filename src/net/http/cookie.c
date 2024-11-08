@@ -34,6 +34,10 @@ b8 cookies_get(cookies_t* cookies, str_t key, str_t* out_value) {
     return strhashmap_get(&cookies->strhashmap, key, out_value);
 }
 
+b8 cookies_get_ci(cookies_t* cookies, str_t key, str_t* out_value) {
+    return strhashmap_get_ci(&cookies->strhashmap, key, out_value);
+}
+
 b8 cookies_set(cookies_t* cookies, str_t key, str_t value) {
     return strhashmap_set(&cookies->strhashmap, key, value);
 }
