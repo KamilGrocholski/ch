@@ -227,6 +227,29 @@ u8 str__should_trim_whitespace(void) {
     return true;
 }
 
+u8 str__should_compare_ci(void) {
+    str_t a = str_from_cstr("str");
+    str_t b = str_from_cstr("StR");
+    expect_true(str_compare_ci(a, b));
+    return true;
+}
+
+u8 str__should_compare_n_ci(void) {
+    str_t a = str_from_cstr("abcd");
+    str_t b = str_from_cstr("ABC1234");
+    expect_true(str_compare_n_ci(a, b, 3));
+    expect_true(str_compare_n_ci(b, a, 3));
+    expect_false(str_compare_n_ci(a, b, 4));
+    expect_false(str_compare_n_ci(b, a, 4));
+    expect_false(str_compare_n_ci(a, b, 100));
+    expect_false(str_compare_n_ci(b, a, 100));
+    expect_true(str_compare_n_ci(a, b, 1));
+    expect_true(str_compare_n_ci(b, a, 1));
+    expect_true(str_compare_n_ci(a, b, 0));
+    expect_true(str_compare_n_ci(b, a, 0));
+    return true;
+}
+
 void str__register_test(void) {
     test_manager_register(str__should_create_from_cstr, "Str should create from cstr");
     test_manager_register(str__should_be_empty, "Str should be empty");
@@ -253,4 +276,6 @@ void str__register_test(void) {
     test_manager_register(str__should_compare_n, "Str should compare n");
     test_manager_register(str__should_convert_to_u64, "Str should convert to u64");
     test_manager_register(str__should_trim_whitespace, "Str should trim whitespace");
+    test_manager_register(str__should_compare_ci, "Str should comapre case insensitive");
+    test_manager_register(str__should_compare_n_ci, "Str should comapre n case insensitive");
 }
