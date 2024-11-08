@@ -43,17 +43,5 @@ string_t cookies_to_string(allocator_t* allocator, cookies_t* cookies) {
         LOG_ERROR("cookies_to_string - called with cookies 0.");
         return 0;
     }
-    string_t string = string_from_parts(allocator, 0, cookies->strhashmap.length * 32);
-    if (cookies->strhashmap.length == 0) {
-        return string;
-    }
-    u64 i = 0;
-    strhashmap_entry_t* curr = 0;
-    do {
-        curr = &(cookies->strhashmap.table[i++]);
-        if (curr->is_occupied && string) {
-            string = string_append_format(string, "%.*s=%.*s", curr->key.length, curr->key.data, curr->value.length, curr->value.data);
-        }
-    } while(i < cookies->strhashmap.capacity);
-    return string;
+    return strhashmap_to_string(allocator, &cookies->strhashmap, "%.*s=%.*s");
 }
