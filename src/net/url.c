@@ -72,17 +72,5 @@ string_t url_query_to_string(allocator_t* allocator, url_query_t* query) {
         LOG_ERROR("url_query_to_string - called with query 0.");
         return 0;
     }
-    string_t string = string_from_parts(allocator, 0, query->values.length * 32);
-    if (query->values.length == 0) {
-        return string;
-    }
-    u64 i = 0;
-    strhashmap_entry_t* curr = 0;
-    do {
-        curr = &(query->values.table[i++]);
-        if (curr->is_occupied && string) {
-            string = string_append_format(string, "%.*s=%.*s", curr->key.length, curr->key.data, curr->value.length, curr->value.data);
-        }
-    } while(i < query->values.capacity);
-    return string;
+    return strhashmap_to_string(allocator, &query->values, "%.*s=%.*s");
 }
