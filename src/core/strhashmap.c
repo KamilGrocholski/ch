@@ -127,13 +127,19 @@ b8 strhashmap_set(strhashmap_t* strhashmap, str_t key, str_t value) {
     return true;
 }
 
-b8 strhashmap_get(strhashmap_t* strhashmap, str_t key, str_t* value) {
+static b8 _strhashmap_get(strhashmap_t* strhashmap, str_t key, str_t* value, b8 ci) {
     if (!strhashmap || !strhashmap->table) return false;
     u64 index = _hash(key, strhashmap->capacity);
     u64 original_index = index;
     strhashmap_entry_t* entry = &(strhashmap->table[index]);
     while (entry->is_occupied) {
-        if (str_compare(entry->key, key)) {
+        b8 eq;
+        if (ci) {
+            eq = str_compare_ci(entry->key, key);
+        } else {
+            eq = str_compare(entry->key, key);
+        }
+        if (eq) {
             *value = entry->value;
             return true;
         }
@@ -142,6 +148,14 @@ b8 strhashmap_get(strhashmap_t* strhashmap, str_t key, str_t* value) {
         entry = &(strhashmap->table[index]);
     }
     return false;
+}
+
+b8 strhashmap_get(strhashmap_t* strhashmap, str_t key, str_t* value) {
+    return _strhashmap_get(strhashmap, key, value, false);
+}
+
+b8 strhashmap_get_ci(strhashmap_t* strhashmap, str_t key, str_t* value) {
+    return _strhashmap_get(strhashmap, key, value, true);
 }
 
 b8 strhashmap_remove(strhashmap_t* strhashmap, str_t key) {

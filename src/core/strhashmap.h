@@ -30,6 +30,8 @@ b8 strhashmap_set(strhashmap_t* strhashmap, str_t key, str_t value);
 
 b8 strhashmap_get(strhashmap_t* strhashmap, str_t key, str_t* value);
 
+b8 strhashmap_get_ci(strhashmap_t* strhashmap, str_t key, str_t* value);
+
 b8 strhashmap_remove(strhashmap_t* strhashmap, str_t key);
 
 string_t strhashmap_to_string(allocator_t* allocator, strhashmap_t* strhashmap, const char* kv_format);
