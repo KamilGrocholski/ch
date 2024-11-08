@@ -13,7 +13,7 @@
 u8 http_cookies__should_be_parsed(void) {
     str_t str = str_from_cstr("name1=value1; name2=value2; name3=value3");
     cookies_t cookies = {0};
-    cookies_init(&cookies);
+    cookies_init(0, &cookies);
     b8 ok = cookies_parse_cookie_request_list(str, &cookies);
     expect_true(ok);
     str_t got;
@@ -31,7 +31,7 @@ u8 http_cookies__should_be_parsed(void) {
 
 u8 http_cookies__should_to_string(void) {
     cookies_t cookies = {0};
-    cookies_init(&cookies);
+    cookies_init(0, &cookies);
 
     b8 ok = cookies_set(&cookies, str_from_cstr("name1"), str_from_cstr("value1"));
     expect_true(ok);

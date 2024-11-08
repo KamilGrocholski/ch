@@ -6,6 +6,7 @@
 #include "fs/fs.h"
 
 #include <string.h>
+#include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -24,8 +25,7 @@ void http_response_deinit(http_response_t* response) {
         LOG_ERROR("http_response_deinit - called with response 0.");
         return;
     }
-    strhashmap_init(0, &response->headers);
-    return;
+    strhashmap_deinit(&response->headers);
 }
 
 b8 http_response_headers_set(http_response_t* response, str_t key, str_t value) {
@@ -43,6 +43,7 @@ http_result_t http_response_send_no_content(http_response_t* response, http_stat
 
 http_result_t http_response_send_text(http_response_t* response, http_status_t status, str_t text) {
     if (!http_response_headers_set(response, str_from_cstr("Content-Type"), str_from_cstr("text/plain"))) {
+        LOG_DEBUG("http_response_send_text - could not set header");
         return (http_result_t){.ok = false};
     }
     return http_response_send(response, status, text);
@@ -68,7 +69,7 @@ http_result_t http_response_send_file(http_response_t* response, http_status_t s
 
 http_result_t http_response_send(http_response_t* response, http_status_t status, str_t content) {
     char content_length_literal[64];
-    sprintf(content_length_literal, "%llu", content.length);
+    sprintf(content_length_literal, "%llu", content.length + 1);
     if (!http_response_headers_set(response, str_from_cstr("Content-Length"), str_from_cstr(content_length_literal))) {
         LOG_DEBUG("http_response_send - could not set Content-Length header");
         return (http_result_t){.ok = false};
@@ -92,7 +93,7 @@ http_result_t http_response_send(http_response_t* response, http_status_t status
         }
     }
     
-    string = string_append_format(string, "\r\n%.*s", content.length, content.data);
+    string = string_append_format(string, "\n\n%.*s", content.length, content.data);
     if (!string) {
         LOG_DEBUG("http_response_send - no string 2");
         return (http_result_t){.ok = false};
@@ -100,11 +101,21 @@ http_result_t http_response_send(http_response_t* response, http_status_t status
 
     LOG_DEBUG("http_response_send - final response:\n'%s'", string);
 
-    i32 bytes_sent = send(response->client_fd, string, string_length(string), 0);
-    if (bytes_sent == -1) {
-        LOG_DEBUG("http_response_send - could not send response");
-        string_destroy(string);
-        return (http_result_t){.ok = false};
+    i32 bytes_sent = 0;
+    i32 bytes_total = (i32)string_length(string) + 1;
+    LOG_DEBUG("http_response_send - to send %d bytes", bytes_total);
+    i32 n = 0;
+    while(bytes_sent < bytes_total) {
+        n++;
+        LOG_DEBUG("http_response_send - stream iteration n: %d", n);
+        i32 segment_bytes_sent = send(response->client_fd, string + bytes_sent, bytes_total - bytes_sent, 0);
+        if (segment_bytes_sent == -1) {
+            LOG_ERROR("http_response_send - could not send response bytes_sent/bytes_total = %d/%d errno: %d, error: %s", 
+                        bytes_sent, bytes_total, errno, strerror(errno));
+            string_destroy(string);
+            return (http_result_t){.ok = false};
+        }
+        bytes_sent += segment_bytes_sent;
     }
     LOG_DEBUG("http_response_send - sent %d bytes", bytes_sent);
     string_destroy(string);

@@ -22,8 +22,8 @@ b8 cookies_parse_cookie_request_list(str_t list, cookies_t* cookies) {
     return true;
 }
 
-void cookies_init(cookies_t* cookies) {
-    strhashmap_init(0, &cookies->strhashmap);
+void cookies_init(allocator_t* allocator, cookies_t* cookies) {
+    strhashmap_init(allocator, &cookies->strhashmap);
 }
 
 void cookies_deinit(cookies_t* cookies) {

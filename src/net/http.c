@@ -81,6 +81,7 @@ static void handle_client(http_server_t* server, i32 socket) {
 cleanup: 
     http_request_deinit(&request);
     http_response_deinit(&response);
+    shutdown(client_fd, SHUT_RDWR);
     close(client_fd);
     memory_report();
 }
@@ -98,19 +99,28 @@ void http_server_start(http_server_t* server, u16 port) {
     ASSERT_MSG(server, "http_server_start - called with server 0.");
 
     i32 sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        LOG_FATAL("http_server_start - socket creation failed");
+    }
+
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port = htons(port);
 
-    bind(sock, &addr, sizeof(addr));
+    if (bind(sock, &addr, sizeof(addr)) < 0) {
+        LOG_FATAL("http_server_start - socket bind");
+    }
 
-    listen(sock, 10);
+    if (listen(sock, 10) < 0) {
+        LOG_FATAL("http_server_start - listen failed");
+    }
 
     while(1) {
         handle_client(server, sock);
     }
 
+    shutdown(sock, SHUT_RDWR);
     close(sock);
 }
 

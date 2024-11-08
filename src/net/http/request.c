@@ -8,6 +8,7 @@
 
 void http_request_init(allocator_t* allocator, http_request_t* dest) {
     strhashmap_init(allocator, &dest->headers);
+    cookies_init(allocator, &dest->cookies);
 }
 
 void http_request_deinit(http_request_t* request) {
@@ -16,6 +17,7 @@ void http_request_deinit(http_request_t* request) {
         return;
     }
     strhashmap_deinit(&request->headers);
+    cookies_deinit(&request->cookies);
 }
 
 string_t http_request_to_string(allocator_t* allocator, http_request_t* request) {
@@ -31,7 +33,7 @@ string_t http_request_to_string(allocator_t* allocator, http_request_t* request)
 }
 
 b8 http_request_headers_get(http_request_t* request, str_t key, str_t* out_value) {
-    return strhashmap_get(&request->headers, key, out_value);
+    return strhashmap_get_ci(&request->headers, key, out_value);
 }
 
 b8 http_request_parse(str_t raw_request, http_request_t* out_request) {
@@ -72,8 +74,8 @@ b8 http_request_parse(str_t raw_request, http_request_t* out_request) {
     out_request->proto = proto;
 
     // Split key value pairs
-    while (!str_is_empty(headers)) {
-        header_line = str_pop_first_split_char(&headers, '\n');
+    header_line = str_trim_whitespace(str_pop_first_split_char(&headers, '\n'));
+    while (!str_is_empty(header_line)) {
         LOG_DEBUG("http_request_parse - header line: %.*s", header_line.length, header_line.data);
         str_t key = str_pop_first_split(&header_line, str_from_cstr(": "));
         str_t value = header_line;
@@ -87,6 +89,15 @@ b8 http_request_parse(str_t raw_request, http_request_t* out_request) {
             return false;
         }
         LOG_DEBUG("http_request_parse - header kv: [%.*s]: '%.*s'", key.length, key.data, value.length, value.data);
+        header_line = str_trim_whitespace(str_pop_first_split_char(&headers, '\n'));
+    }
+
+    str_t cookies_list = STR_NULL;
+    if (http_request_headers_get(out_request, str_from_cstr("cookie"), &cookies_list)) {
+        if (!cookies_parse_cookie_request_list(cookies_list, &out_request->cookies)) {
+            LOG_DEBUG("http_request_parse - could not parse cookie request list");
+            return false;
+        }
     }
 
     return true;
