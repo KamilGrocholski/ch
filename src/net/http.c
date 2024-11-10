@@ -82,7 +82,10 @@ static void handle_client(http_server_t* server, i32 client_fd) {
         }
     }
 
+    http_request_deinit(&request);
+    http_response_deinit(&response);
     close(client_fd);
+    memory_report();
     return;
 }
 
