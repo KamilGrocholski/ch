@@ -45,7 +45,35 @@ u8 http_cookies__should_to_string(void) {
     return true;
 }
 
+u8 http_set_cookies__should_to_string(void) {
+    set_cookies_t cookies = {0};
+    set_cookies_init(0, &cookies);
+
+    cookie_t cookie = {
+        .name = str_from_cstr("name"),
+        .value = str_from_cstr("value"),
+        .path = str_from_cstr("path"),
+        .domain = str_from_cstr("domain"),
+        .raw_expires = str_from_cstr("20-08-2025"),
+        .max_age = 1,
+        .same_site = COOKIE_SAME_SITE_LAX_MODE,
+        .secure = true,
+        .http_only = true,
+    };
+
+    expect_true(set_cookies_write(&cookies, cookie));
+    expect_true(set_cookies_write(&cookies, cookie));
+    expect_str_eq_cstr(string_to_str(cookies.writer), 
+        "Set-Cookie: name=value; Path=path; Domain=domain; Expires=20-08-2025; SameSite=Lax; Secure; HttpOnly\n"
+        "Set-Cookie: name=value; Path=path; Domain=domain; Expires=20-08-2025; SameSite=Lax; Secure; HttpOnly\n");
+
+    set_cookies_deinit(&cookies);
+
+    return true;
+}
+
 void http_cookie__register_test(void) {
     test_manager_register(http_cookies__should_be_parsed, "Http request cookie should be parsed");
     test_manager_register(http_cookies__should_to_string, "Http request cookie should to string");
+    test_manager_register(http_set_cookies__should_to_string, "Http set cookies should to string");
 }

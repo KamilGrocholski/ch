@@ -7,28 +7,27 @@
 http_result_t http_middleware_containers_apply_all(
     http_response_t* response, 
     http_request_t* request, 
-    http_middleware_container_t* middleware_containers,
-    http_handler_t final_handler
+    http_middleware_container_t* middleware_containers
 ) {
     if (!middleware_containers) {
         LOG_DEBUG("http_middleware_containers_apply_all - no middlewares to apply");
-        return (http_result_t){.ok = true};
+        return HTTP_RESULT_NEXT;
     }
     LOG_DEBUG("http_middleware_containers_apply_all - starting to apply: %llu middlewares", array_length(middleware_containers));
     for (u64 i = 0; i < array_length(middleware_containers); i++) {
         http_middleware_t current_middleware = middleware_containers[i].middleware;
         if (current_middleware) {
             LOG_DEBUG("http_middleware_containers_apply_all - calling middleware at index: %llu", i);
-            http_result_t result = current_middleware(response, request, final_handler);
-            if (!result.ok) {
+            http_result_t result = current_middleware(response, request);
+            if (result.type != HTTP_RESULT_TYPE_NEXT) {
                 LOG_DEBUG("http_middleware_containers_apply_all - middleware at index %llu stopped the chain", i);
-                return result;
+                return HTTP_RESULT_SEND;
             }
         } else {
             LOG_FATAL("http_middleware_containers_apply_all - 0 middleware at index: %llu", i);
         }
     }
-    return (http_result_t){.ok = true};
+    return HTTP_RESULT_NEXT;
 }
 
 http_middleware_container_t* http_middleware_containers_from_v(u64 middleware_count, va_list middlewares) {

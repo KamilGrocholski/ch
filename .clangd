@@ -1,0 +1,2 @@
+CompileFlags:
+  Add: [-I/home/kamil/Projects/cjson/src]

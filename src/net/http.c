@@ -27,30 +27,34 @@ static http_result_t default_handle_internal_server_error(http_response_t* respo
     return http_response_send_no_content(response, HTTP_STATUS_INTERNAL_SERVER_ERROR);
 }
 
-static void handle_client(http_server_t* server, i32 socket) {
-    i32 client_fd = accept(socket, 0, 0);
-
-    char buffer[server->stack_buffer_size];
-    i64 recv_length = recv(client_fd, buffer, server->stack_buffer_size, 0);
-    if (recv_length <= 0) {
+static void handle_client(http_server_t* server, i32 client_fd) {
+    char request_buffer[server->stack_buffer_size];
+    i64 request_length = recv(client_fd, request_buffer, server->stack_buffer_size, 0);
+    if (request_length < 0) {
+        LOG_ERROR("handle_client - request_length < 0");
         close(client_fd);
         return;
     }
-    str_t raw_request = str_from_parts(buffer, (u64)recv_length);
+
+    str_t raw_request = str_from_parts(request_buffer, (u64)request_length);
 
     http_request_t request = {0};
     http_request_init(0, &request);
 
     if (!http_request_parse(raw_request, &request)) {
         LOG_ERROR("handle_client - http request parsing failed");
-        goto cleanup;
+        // TODO: add handler
+        close(client_fd);
+        return;
     }
+
     http_response_t response = {0};
     http_response_init(&response);
     response.client_fd = client_fd;
     response.request = &request;
+
     http_method_handler_t method_handler = http_router_search(&server->router, request.method, request.path, &request.params);
-    http_result_t result;
+    http_result_t result = {0};
     if (!method_handler.handler) {
         LOG_DEBUG("handle_client - handle not found");
         if (server->handle_not_found) {
@@ -69,8 +73,8 @@ static void handle_client(http_server_t* server, i32 socket) {
             method_handler.handler
         );
     }
-    if (!result.ok) {
-        LOG_ERROR("handle_client - result is not ok");
+    if (result.type == HTTP_RESULT_TYPE_ERR) {
+        LOG_ERROR("handle_client - result is err");
         if (server->handle_internal_server_error) {
             result = server->handle_internal_server_error(&response, &request);
         } else {
@@ -78,12 +82,8 @@ static void handle_client(http_server_t* server, i32 socket) {
         }
     }
 
-cleanup: 
-    http_request_deinit(&request);
-    http_response_deinit(&response);
-    shutdown(client_fd, SHUT_RDWR);
     close(client_fd);
-    memory_report();
+    return;
 }
 
 void http_server_init(http_server_t* server, u32 stack_buffer_size) {
@@ -98,9 +98,14 @@ void http_server_deinit(http_server_t* server) {
 void http_server_start(http_server_t* server, u16 port) {
     ASSERT_MSG(server, "http_server_start - called with server 0.");
 
-    i32 sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
+    i32 server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) {
         LOG_FATAL("http_server_start - socket creation failed");
+    }
+
+    int opt = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        LOG_FATAL("http_server_start - setsockopt(SO_REUSEADDR) failed");
     }
 
     struct sockaddr_in addr;
@@ -108,20 +113,27 @@ void http_server_start(http_server_t* server, u16 port) {
     addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port = htons(port);
 
-    if (bind(sock, &addr, sizeof(addr)) < 0) {
+    if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         LOG_FATAL("http_server_start - socket bind");
     }
 
-    if (listen(sock, 10) < 0) {
+    if (listen(server_fd, 10) < 0) {
         LOG_FATAL("http_server_start - listen failed");
     }
 
     while(1) {
-        handle_client(server, sock);
+        struct sockaddr_in client_addr;
+        socklen_t client_addr_len = sizeof(client_addr);
+        i32 client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len);
+        if (client_fd < 0) {
+            LOG_ERROR("http_server_start - failed accept");
+            continue;
+        }
+        handle_client(server, client_fd);
     }
 
-    shutdown(sock, SHUT_RDWR);
-    close(sock);
+    shutdown(server_fd, SHUT_RDWR);
+    close(server_fd);
 }
 
 void http_server_not_found(http_server_t* server, http_handler_t handler) {
@@ -176,12 +188,12 @@ http_result_t http_server_process_request(
     http_middleware_container_t* middleware_containers,
     http_handler_t final_handler
 ) {
-    http_result_t result = http_middleware_containers_apply_all(response, request, server->middleware_containers, final_handler);
-    if (!result.ok) {
+    http_result_t result = http_middleware_containers_apply_all(response, request, server->middleware_containers);
+    if (result.type != HTTP_RESULT_TYPE_NEXT) {
         return result;
     }
-    result = http_middleware_containers_apply_all(response, request, middleware_containers, final_handler);
-    if (!result.ok) {
+    result = http_middleware_containers_apply_all(response, request, middleware_containers);
+    if (result.type != HTTP_RESULT_TYPE_NEXT) {
         return result;
     }
     return final_handler(response, request);

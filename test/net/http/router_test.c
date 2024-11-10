@@ -26,32 +26,36 @@ static void add_testing_route(
     va_end(args);
 }
 
-http_result_t middleware_after_void(http_response_t* response, http_request_t* request, http_handler_t next) {
+http_result_t middleware_after_void(http_response_t* response, http_request_t* request) {
+    (void)response;
+    (void)request;
     LOG_DEBUG("middleware after void");
-    return next(response, request);
+    return HTTP_RESULT_NEXT;
 }
 
-http_result_t middleware_void(http_response_t* response, http_request_t* request, http_handler_t next) {
+http_result_t middleware_void(http_response_t* response, http_request_t* request) {
+    (void)response;
+    (void)request;
     LOG_DEBUG("middleware void");
-    return next(response, request);
+    return HTTP_RESULT_NEXT;
 }
 
 http_result_t handle_user_id(http_response_t* response, http_request_t* request) {
     (void)response;
     (void)request;
-    return (http_result_t){.ok = true};
+    return HTTP_RESULT_SEND;
 }
 
 http_result_t handle_user_id_okej(http_response_t* response, http_request_t* request) {
     (void)response;
     (void)request;
-    return (http_result_t){.ok = true};
+    return HTTP_RESULT_SEND;
 }
 
 http_result_t handle_user_id_friends(http_response_t* response, http_request_t* request) {
     (void)response;
     (void)request;
-    return (http_result_t){.ok = true};
+    return HTTP_RESULT_SEND;
 }
 
 u8 http_router__should_register_route_and_find_handler(void) {
@@ -82,11 +86,10 @@ u8 http_router__should_register_route_and_find_handler(void) {
     http_result_t result = http_middleware_containers_apply_all(
         &response, 
         &request, 
-        method_handler.middleware_containers, 
-        method_handler.handler
+        method_handler.middleware_containers
     );
     result = method_handler.handler(&response, &request);
-    expect_true(result.ok);
+    expect_eq(HTTP_RESULT_TYPE_SEND, result.type);
 
     http_router_deinit(&router);
 

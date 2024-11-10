@@ -9,13 +9,23 @@
 
 #include <stdarg.h>
 
+typedef enum http_result_type_t {
+    HTTP_RESULT_TYPE_NEXT,
+    HTTP_RESULT_TYPE_SEND,
+    HTTP_RESULT_TYPE_ERR,
+} http_result_type_t;
+
 typedef struct http_result_t {
-    b8 ok;
+    u8 type;
 } http_result_t;
+
+#define HTTP_RESULT_NEXT ((http_result_t){.type = HTTP_RESULT_TYPE_NEXT})
+#define HTTP_RESULT_SEND ((http_result_t){.type = HTTP_RESULT_TYPE_SEND})
+#define HTTP_RESULT_ERR ((http_result_t){.type = HTTP_RESULT_TYPE_ERR})
 
 // -- cookie start
 typedef enum cookie_same_site_t {
-    COOKIE_SAME_SITE_DEFAULT_MODE = 1,
+    COOKIE_SAME_SITE_DEFAULT_MODE,
     COOKIE_SAME_SITE_LAX_MODE,
     COOKIE_SAME_SITE_STRICT_MODE,
     COOKIE_SAME_SITE_NONE_MODE,
@@ -37,8 +47,19 @@ typedef struct cookie_t {
     b8 secure;
     b8 http_only;
     cookie_same_site_t same_site;
-    str_t raw;
 } cookie_t;
+
+string_t cookie_to_string(allocator_t* allocator, cookie_t cookie);
+
+typedef struct set_cookies_t {
+    string_t writer;
+} set_cookies_t;
+
+b8 set_cookies_init(allocator_t* allocator, set_cookies_t* cookies);
+
+void set_cookies_deinit(set_cookies_t* cookies);
+
+b8 set_cookies_write(set_cookies_t* cookies, cookie_t cookie);
 
 typedef struct cookies_t {
     strhashmap_t strhashmap;
@@ -121,6 +142,7 @@ typedef struct http_response_t {
     http_status_t status;
     strhashmap_t headers;
     str_t body;
+    set_cookies_t set_cookies;
 } http_response_t;
 
 b8 http_response_init(http_response_t* response);
@@ -171,22 +193,14 @@ b8 http_request_parse(str_t raw_request, http_request_t* dest);
 typedef struct http_middleware_container_t http_middleware_container_t;
 typedef struct http_server_t http_server_t;
 
-typedef http_result_t (*http_middleware_t)(http_response_t* response, http_request_t* request, http_handler_t next);
+typedef http_result_t (*http_middleware_t)(http_response_t* response, http_request_t* request);
 
 http_middleware_container_t* http_middleware_containers_from_v(u64 middleware_count, va_list middlewares);
 
 http_result_t http_middleware_containers_apply_all(
     http_response_t* response,
     http_request_t* request,
-    http_middleware_container_t* middleware_containers,
-    http_handler_t final_handler
-);
-
-http_result_t http_process_all(
-    http_response_t* response, 
-    http_request_t* request, 
-    http_middleware_container_t* middleware_containers,
-    http_handler_t final_handler
+    http_middleware_container_t* middleware_containers
 );
 // -- middleware end
 

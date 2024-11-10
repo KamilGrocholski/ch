@@ -10,31 +10,37 @@
 #include <string.h>
 #include <stdio.h>
 
-http_result_t middleware_global(http_response_t* response, http_request_t* request, http_handler_t next) {
-    LOG_INFO("middleware_global - starting: %s %.*s",
+http_result_t middleware_global(http_response_t* response, http_request_t* request) {
+    LOG_INFO("%s %.*s",
             http_method_to_cstr(request->method),
             request->path.length,
             request->path.data);
-
-    return next(response, request);
+    if (false) {
+        return http_response_send_text(response, HTTP_STATUS_BAD_REQUEST, str_from_cstr("false"));
+    }
+    return HTTP_RESULT_NEXT;
 }
 
-http_result_t middleware_after_void(http_response_t* response, http_request_t* request, http_handler_t next) {
-    LOG_INFO("middleware_after_void - starting: %s %.*s",
+http_result_t middleware_void(http_response_t* response, http_request_t* request) {
+    LOG_INFO("%s %.*s",
             http_method_to_cstr(request->method),
             request->path.length,
             request->path.data);
-
-    return next(response, request);
+    if (false) {
+        return http_response_send_text(response, HTTP_STATUS_BAD_REQUEST, str_from_cstr("false"));
+    }
+    return HTTP_RESULT_NEXT;
 }
 
-http_result_t middleware_void(http_response_t* response, http_request_t* request, http_handler_t next) {
-    LOG_INFO("middleware_void - starting: %s %.*s",
+http_result_t middleware_after_void(http_response_t* response, http_request_t* request) {
+    LOG_INFO("%s %.*s",
             http_method_to_cstr(request->method),
             request->path.length,
             request->path.data);
-
-    return next(response, request);
+    if (false) {
+        return http_response_send_text(response, HTTP_STATUS_BAD_REQUEST, str_from_cstr("false"));
+    }
+    return HTTP_RESULT_NEXT;
 }
 
 http_result_t handle_makefile(http_response_t* response, http_request_t* request) {
@@ -96,7 +102,7 @@ int main() {
     http_server_use(&server, 1, middleware_global);
 
     http_server_get(&server, "/makefile", handle_makefile, 0);
-    http_server_get(&server, "/users", handle_users, 2, middleware_void, middleware_after_void);
+    http_server_get(&server, "/users", handle_users, 0);
     http_server_get(&server, "/users/:id/void", handle_void, 0);
     http_server_get(&server, "/users/:id", handle_user_id, 0);
     http_server_get(&server, "/void", handle_void, 0);
