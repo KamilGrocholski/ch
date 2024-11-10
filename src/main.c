@@ -32,6 +32,18 @@ http_result_t middleware_void(http_response_t* response, http_request_t* request
     return HTTP_RESULT_NEXT;
 }
 
+http_result_t middleware_theme_cookie(http_response_t* response, http_request_t* request) {
+    LOG_INFO("%s %.*s",
+            http_method_to_cstr(request->method),
+            request->path.length,
+            request->path.data);
+    str_t theme;
+    if (!cookies_get(&request->cookies, str_from_cstr("theme"), &theme)) {
+        return http_response_send_text(response, HTTP_STATUS_BAD_REQUEST, str_from_cstr("no theme cookie"));
+    }
+    return HTTP_RESULT_NEXT;
+}
+
 http_result_t middleware_after_void(http_response_t* response, http_request_t* request) {
     LOG_INFO("%s %.*s",
             http_method_to_cstr(request->method),
@@ -58,11 +70,7 @@ http_result_t handle_users(http_response_t* response, http_request_t* request) {
             request->path.length,
             request->path.data);
 
-    str_t theme;
-    if (!cookies_get(&request->cookies, str_from_cstr("theme"), &theme)) {
-        return http_response_send_text(response, HTTP_STATUS_BAD_REQUEST, str_from_cstr("no theme cookie"));
-    }
-    return http_response_send_text(response, HTTP_STATUS_OK, theme);
+    return http_response_send_text(response, HTTP_STATUS_OK, str_from_cstr("users"));
 }
 
 http_result_t handle_user_id(http_response_t* response, http_request_t* request) {
@@ -102,7 +110,7 @@ int main() {
     http_server_use(&server, 1, middleware_global);
 
     http_server_get(&server, "/makefile", handle_makefile, 0);
-    http_server_get(&server, "/users", handle_users, 0);
+    http_server_get(&server, "/users", handle_users, 3, middleware_theme_cookie, middleware_void, middleware_after_void);
     http_server_get(&server, "/users/:id/void", handle_void, 0);
     http_server_get(&server, "/users/:id", handle_user_id, 0);
     http_server_get(&server, "/void", handle_void, 0);
