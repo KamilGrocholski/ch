@@ -44,7 +44,7 @@ void* memory_allocate(u64 size, memory_tag_t tag) {
     stats.tagged_allocations[tag] += size;
     stats.tagged_allocations_count[tag]++;
     stats.allocations_count++;
-    return malloc(size);
+    return calloc(size, 1);
 }
 
 void* memory_reallocate(void* block, u64 old_size, u64 new_size, memory_tag_t tag) {
