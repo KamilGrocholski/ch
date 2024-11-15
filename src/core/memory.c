@@ -83,7 +83,7 @@ char* memory_stats_to_string(void) {
     const u64 kib = 1024;
 
     char buffer[8000];
-    sprintf(&buffer[0], "Memory report:\n    allocs: %llu\n    deallocs: %llu\n    usage(tagged):\n", 
+    snprintf(&buffer[0], sizeof(buffer), "Memory report:\n    allocs: %llu\n    deallocs: %llu\n    usage(tagged):\n", 
             stats.allocations_count, stats.deallocations_count);
     u64 offset = strlen(buffer);
     for (u32 i = 0; i < MEMORY_TAG_MAX_TAGS; i++) {

@@ -46,7 +46,7 @@ u8 string__should_append_string(void) {
     expect_neq(0, other);
 
     char expected_cstr[seg1_length + seg2_length + 1];
-    sprintf(expected_cstr, "%s%s", seg1, seg2);
+    snprintf(expected_cstr, sizeof(expected_cstr), "%s%s", seg1, seg2);
     u32 expected_length = strlen(expected_cstr);
 
     string = string_append_string(string, other);
@@ -92,7 +92,7 @@ u8 string__should_append_format(void) {
     const char* seg3 = "value";
     str_t seg4 = str_from_cstr("httpsmth");
     char expected_formatted[2000];
-    sprintf(expected_formatted, format, seg1.length, seg1.data, seg2, seg3, seg4.length, seg4.data);
+    snprintf(expected_formatted, sizeof(expected_formatted), seg1.length, seg1.data, seg2, seg3, seg4.length, seg4.data);
     u32 expected_length = strlen(expected_formatted);
 
     string = string_append_format(string, format, seg1.length, seg1.data, seg2, seg3, seg4.length, seg4.data);
