@@ -44,7 +44,7 @@ void* memory_allocate(u64 size, memory_tag_t tag) {
     stats.tagged_allocations[tag] += size;
     stats.tagged_allocations_count[tag]++;
     stats.allocations_count++;
-    return malloc(size);
+    return calloc(size, 1);
 }
 
 void* memory_reallocate(void* block, u64 old_size, u64 new_size, memory_tag_t tag) {
@@ -83,7 +83,7 @@ char* memory_stats_to_string(void) {
     const u64 kib = 1024;
 
     char buffer[8000];
-    sprintf(&buffer[0], "Memory report:\n    allocs: %llu\n    deallocs: %llu\n    usage(tagged):\n", 
+    snprintf(&buffer[0], sizeof(buffer), "Memory report:\n    allocs: %llu\n    deallocs: %llu\n    usage(tagged):\n", 
             stats.allocations_count, stats.deallocations_count);
     u64 offset = strlen(buffer);
     for (u32 i = 0; i < MEMORY_TAG_MAX_TAGS; i++) {

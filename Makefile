@@ -15,8 +15,9 @@ TESTCFILES = $(shell find $(TESTS_DIR) -type f -name "*.c")
 OBJS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRCCFILES) $(LIBCFILES))
 
 CC = gcc
-CFLAGS = -std=gnu17 -D _GNU_SOURCE -D __STDC_WANT_LIB_EXT1__ -Wall -Wextra -pedantic -I$(INCLUDE_DIR)
-LDFLAGS = -lm
+CFLAGS = -std=gnu17 -D _GNU_SOURCE -D __STDC_WANT_LIB_EXT1__ -Wall -Wextra -Wpedantic -I$(INCLUDE_DIR)
+CFLAGS += -fPIC -fstack-clash-protection -fstack-protector-all -fcf-protection=full -D_FORTIFY_SOURCE=3
+LDFLAGS = -lm -Wl,-pic-executable -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
 
 ifeq ($(debug), 1)
 	CFLAGS += -g -O0

@@ -84,7 +84,7 @@ http_result_t handle_user_id(http_response_t* response, http_request_t* request)
         return http_response_send_text(response, HTTP_STATUS_BAD_REQUEST, str_from_cstr("No user id"));
     }
     char buffer[2000] = {0};
-    sprintf(buffer, "%.*s", (i32)user_id.length, user_id.data);
+    snprintf(buffer, sizeof(buffer), "%.*s", (i32)user_id.length, user_id.data);
     return http_response_send_text(response, HTTP_STATUS_OK, str_from_cstr(buffer));
 }
 

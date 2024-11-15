@@ -68,7 +68,7 @@ http_result_t http_response_send_file(http_response_t* response, http_status_t s
 
 http_result_t http_response_send(http_response_t* response, http_status_t status, str_t content) {
     char content_length_literal[64];
-    sprintf(content_length_literal, "%llu", content.length + 1);
+    snprintf(content_length_literal, sizeof(content_length_literal), "%llu", content.length + 1);
     if (!http_response_headers_set(response, str_from_cstr("Content-Length"), str_from_cstr(content_length_literal))) {
         LOG_DEBUG("http_response_send - could not set Content-Length header");
         return HTTP_RESULT_ERR;
