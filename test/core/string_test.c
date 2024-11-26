@@ -91,8 +91,7 @@ u8 string__should_append_format(void) {
     int seg2 = 100;
     const char* seg3 = "value";
     str_t seg4 = str_from_cstr("httpsmth");
-    char expected_formatted[2000];
-    snprintf(expected_formatted, sizeof(expected_formatted), seg1.length, seg1.data, seg2, seg3, seg4.length, seg4.data);
+    char* expected_formatted = "seg11.1: 100, value, httpsmth";
     u32 expected_length = strlen(expected_formatted);
 
     string = string_append_format(string, format, seg1.length, seg1.data, seg2, seg3, seg4.length, seg4.data);
